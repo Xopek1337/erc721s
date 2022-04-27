@@ -114,7 +114,7 @@ contract NFTMarketplace is Ownable {
                 LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
             );
-            
+
         for(uint i = 0; i < tokenIds.length; i++) {
             require(checkLock(_token, tokenIds[i]), "token is locked");
             LockNFT(_token).transferFrom(msg.sender, address(this), tokenIds[i]);
@@ -214,6 +214,8 @@ contract NFTMarketplace is Ownable {
 
         LockNFT(_token).transferFrom(renter, landlord, _tokenId);
 
+        delete (userOffers[_token][_tokenId][landlord]);
+
         return true;
     }
 
@@ -286,6 +288,8 @@ contract NFTMarketplace is Ownable {
             }
         }
 
+        delete (userOffers[_token][_tokenId][landlord]);
+        
         return true;
     }
 
