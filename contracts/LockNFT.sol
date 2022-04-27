@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 /// @title Mock Erc721s NFT featuring EIP2612 like logic for gasless listings
 /// @author Fil Makarov (@filmakarov)
-contract MockNFT is ERC721s, Ownable {  
+contract LockNFT is ERC721s, Ownable {  
 
 using Strings for uint256;
 
