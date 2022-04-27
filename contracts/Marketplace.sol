@@ -12,6 +12,7 @@ contract NFTMarketplace is Ownable {
     address public wallet; 
     uint256 public fee;
     uint256 public feeMutltipier = 200;
+    uint256 public day = 86400;
 
     struct OfferData {
         uint256 minTime;
@@ -197,7 +198,7 @@ contract NFTMarketplace is Ownable {
 
         LockNFT(_token).lock(address(this), tokenId);
         LockNFT(_token).transferFrom(address(this), msg.sender, tokenId);
-        userOffers[_token][tokenId][landlord].endTime = rentTime * 86400 + block.timestamp;
+        userOffers[_token][tokenId][landlord].endTime = rentTime * day + block.timestamp;
 
         return true;
     }
@@ -289,7 +290,7 @@ contract NFTMarketplace is Ownable {
         }
 
         delete (userOffers[_token][_tokenId][landlord]);
-        
+
         return true;
     }
 
@@ -343,7 +344,7 @@ contract NFTMarketplace is Ownable {
                     landlord,
                     _payoutAmount
                 );
-                userOffers[_token][_tokenId][landlord].endTime += _extendedTime * 86400;
+                userOffers[_token][_tokenId][landlord].endTime += _extendedTime * day;
             }
             else {
                 revert("landlord does not agree to the extend rent");
@@ -358,7 +359,7 @@ contract NFTMarketplace is Ownable {
                     landlord,
                     _payoutAmount
                 );
-                userOffers[_token][_tokenId][landlord].endTime += _extendedTime * 86400;
+                userOffers[_token][_tokenId][landlord].endTime += _extendedTime * day;
             }
             else {
                 revert("renter does not agree to the extend rent");
