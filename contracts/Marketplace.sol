@@ -110,6 +110,11 @@ contract NFTMarketplace is Ownable {
         payable
         returns(bool)
     {   
+        require(
+                LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
+                "token not approved"
+            );
+            
         for(uint i = 0; i < tokenIds.length; i++) {
             require(checkLock(_token, tokenIds[i]), "token is locked");
             LockNFT(_token).transferFrom(msg.sender, address(this), tokenIds[i]);
