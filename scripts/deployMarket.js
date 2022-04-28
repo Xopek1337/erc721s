@@ -6,7 +6,7 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
 
   const NFTMarketplaceInstance = await ethers.getContractFactory('NFTMarketplace');
-  const NFTMarketplace = await NFTMarketplaceInstance.deploy();
+  const NFTMarketplace = await NFTMarketplaceInstance.deploy(process.env.WALLET, "5");
 
   console.log('Network', network);
   console.log('Deploying contracts with the account:', deployer.address);

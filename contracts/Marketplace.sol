@@ -142,7 +142,7 @@ contract NFTMarketplace is Ownable {
         returns(bool)
     {   
         for(uint i = 0; i < tokenIds.length; i++) {
-            require(userOffers[_token][tokenIds[i]][msg.sender].payToken != address(0), "");
+            require(userOffers[_token][tokenIds[i]][msg.sender].payToken != address(0), "offer is not exist");
 
             LockNFT(_token).transferFrom(msg.sender, address(this), tokenIds[i]);
 
@@ -166,8 +166,8 @@ contract NFTMarketplace is Ownable {
                 LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
             );
-        require(userOffers[_token][tokenId][landlord].payToken != address(0), "");
-        require(_payToken == userOffers[_token][tokenId][landlord].payToken, "");
+        require(userOffers[_token][tokenId][landlord].payToken != address(0), "offer is not exist");
+        require(_payToken == userOffers[_token][tokenId][landlord].payToken, "token is not valid");
 
         uint price;
         uint feeAmount;
@@ -180,7 +180,7 @@ contract NFTMarketplace is Ownable {
             price = rentTime * userOffers[_token][tokenId][landlord].price;
         }
         
-        require(rentTime >=  userOffers[_token][tokenId][landlord].minTime && rentTime <=  userOffers[_token][tokenId][landlord].maxTime, "");
+        require(rentTime >=  userOffers[_token][tokenId][landlord].minTime && rentTime <=  userOffers[_token][tokenId][landlord].maxTime, "invalid rent time");
 
         feeAmount = price * fee / feeMutltipier;
 
@@ -196,8 +196,9 @@ contract NFTMarketplace is Ownable {
             price
         );
 
-        LockNFT(_token).lock(address(this), tokenId);
         LockNFT(_token).transferFrom(address(this), msg.sender, tokenId);
+        LockNFT(_token).lock(address(this), tokenId);
+        
         userOffers[_token][tokenId][landlord].endTime = rentTime * day + block.timestamp;
 
         return true;
@@ -207,9 +208,9 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
-        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "");
-        require(msg.sender == landlord, "");
-        require(userOffers[_token][_tokenId][landlord].endTime >= block.timestamp, "");
+        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
+        require(msg.sender == landlord, "only landlord can call back token");
+        require(userOffers[_token][_tokenId][landlord].endTime <= block.timestamp, "rent time is not expired");
 
         address renter = LockNFT(_token).ownerOf(_tokenId);
 
@@ -224,16 +225,16 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
-        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "");
+        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
         
         if(isRenter) {
-            require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "");
+            require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "caller should be arenter");
             
             refundRequests[_token][_tokenId][landlord].isRenterAgree = true;
             refundRequests[_token][_tokenId][landlord].payoutAmount = _payoutAmount;
         }
         else {
-            require(msg.sender == landlord, "");
+            require(msg.sender == landlord, "caller should be a landlord");
 
             refundRequests[_token][_tokenId][landlord].isLandlordAgree = true;
             refundRequests[_token][_tokenId][landlord].payoutAmount = _payoutAmount;
@@ -252,15 +253,15 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
-        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "");
-        require(_payoutAmount == refundRequests[_token][_tokenId][landlord].payoutAmount, "");
+        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
+        require(_payoutAmount == refundRequests[_token][_tokenId][landlord].payoutAmount, "invalid payout amount");
 
         address _payToken = userOffers[_token][_tokenId][landlord].payToken;
         address renter = LockNFT(_token).ownerOf(_tokenId);
 
         if(isRenter) {
             if(refundRequests[_token][_tokenId][landlord].isLandlordAgree == true) {
-                require(renter == msg.sender, "");
+                require(renter == msg.sender, "caller should be a renter");
 
                 IERC20(_payToken).transferFrom(
                     msg.sender,
@@ -275,7 +276,7 @@ contract NFTMarketplace is Ownable {
         }
         else {
             if(refundRequests[_token][_tokenId][landlord].isRenterAgree == true) {
-                require(landlord == msg.sender, "");
+                require(landlord == msg.sender, "caller should be a landlord");
 
                 IERC20(_payToken).transferFrom(
                     msg.sender,
@@ -305,17 +306,17 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
-        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "");
+        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
 
         if(isRenter) {
-            require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "");
+            require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "caller should be a renter");
 
             extendRequests[_token][_tokenId][landlord].isRenterAgree = true;
             extendRequests[_token][_tokenId][landlord].payoutAmount = _payoutAmount;
             extendRequests[_token][_tokenId][landlord].extendedTime = _extendedTime;
         }
         else {
-            require(landlord == msg.sender, "");
+            require(landlord == msg.sender, "caller should be a landlord");
 
             extendRequests[_token][_tokenId][landlord].isLandlordAgree = true;
             extendRequests[_token][_tokenId][landlord].payoutAmount = _payoutAmount;
@@ -329,15 +330,15 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
-        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "");
-        require(_payoutAmount == extendRequests[_token][_tokenId][landlord].payoutAmount, "");
+        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
+        require(_payoutAmount == extendRequests[_token][_tokenId][landlord].payoutAmount, "invalid payout amount");
 
         address _payToken = userOffers[_token][_tokenId][landlord].payToken;
         uint _extendedTime = extendRequests[_token][_tokenId][landlord].extendedTime;
         
         if(isRenter) {
             if(extendRequests[_token][_tokenId][landlord].isLandlordAgree == true) {
-                require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "");
+                require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "caller should be a renter");
 
                 IERC20(_payToken).transferFrom(
                     msg.sender,
@@ -352,7 +353,7 @@ contract NFTMarketplace is Ownable {
         }
         else {
             if(extendRequests[_token][_tokenId][landlord].isRenterAgree == true) {
-                require(landlord == msg.sender, "");
+                require(landlord == msg.sender, "caller should be a landlord");
 
                 IERC20(_payToken).transferFrom(
                     msg.sender,
