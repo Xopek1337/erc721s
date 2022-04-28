@@ -210,6 +210,23 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
+    function backTokenAdmin(address _token, address landlord, uint _tokenId)
+        public
+        onlyOwner
+        returns(bool)
+    {
+        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
+        require(userOffers[_token][_tokenId][landlord].endTime <= block.timestamp, "rent time is not expired");
+
+        address renter = LockNFT(_token).ownerOf(_tokenId);
+
+        LockNFT(_token).transferFrom(renter, landlord, _tokenId);
+
+        delete (userOffers[_token][_tokenId][landlord]);
+
+        return true;
+    }
+
     function requestRefundToken(address _token, address landlord, uint _tokenId, uint _payoutAmount, bool isRenter) 
         public
         returns(bool)
