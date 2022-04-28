@@ -270,7 +270,7 @@ contract NFTMarketplace is Ownable {
                 require(renter == msg.sender, "caller should be a renter");
 
                 IERC20(_payToken).transferFrom(
-                    msg.sender,
+                    landlord,
                     renter,
                     _payoutAmount
                 );
