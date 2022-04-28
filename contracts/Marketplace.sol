@@ -271,7 +271,7 @@ contract NFTMarketplace is Ownable {
 
                 IERC20(_payToken).transferFrom(
                     msg.sender,
-                    landlord,
+                    renter,
                     _payoutAmount
                 );
                 LockNFT(_token).transferFrom(renter, landlord, _tokenId);
