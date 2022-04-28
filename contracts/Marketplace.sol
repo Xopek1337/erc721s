@@ -242,7 +242,7 @@ contract NFTMarketplace is Ownable {
         }
         else {
             require(msg.sender == landlord, "caller should be a landlord");
-            require(IERC20(_payToken).allowance(landlord, address(this)) >= payoutAmount, "pay tokens is not approved");
+            require(IERC20(_payToken).allowance(landlord, address(this)) >= _payoutAmount, "pay tokens is not approved");
 
             refundRequests[_token][_tokenId][landlord].isLandlordAgree = true;
             refundRequests[_token][_tokenId][landlord].payoutAmount = _payoutAmount;
