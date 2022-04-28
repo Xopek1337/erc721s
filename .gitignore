@@ -5,6 +5,7 @@ secrets.json
 contracts/backup
 .env
 networks
+.vscode
 
 #Hardhat files
 cache

@@ -28,6 +28,8 @@ module.exports = {
     },
     localhost: {
       gasPrice: 200000000000, //200 gwei
+      url: process.env.RPC_NODE_URL_LOCALHOST,
+      accounts: ["0x92f01a49ceea0186dd302544c4f20a41958baa628e22286e8396f23dd9239f90"],
       mining: {
         auto: false,
         interval: [13000, 16000]
