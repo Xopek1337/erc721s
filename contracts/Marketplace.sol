@@ -46,19 +46,6 @@ contract NFTMarketplace is Ownable {
     mapping(address => mapping(uint256 => mapping(address => OfferData)))
         public userOffers;
 
-    modifier offerNotExists(
-        address _token,
-        uint256 _tokenId,
-        address _creator
-    ) {
-        OfferData memory offer = userOffers[_token][_tokenId][_creator];
-        require(
-            offer.payToken == address(0),
-            "offer already created"
-        );
-        _;
-    }
-
     constructor(address _wallet, uint256 _fee) {
         wallet = _wallet;
         fee = _fee;
@@ -76,7 +63,6 @@ contract NFTMarketplace is Ownable {
     )
         public 
         payable
-        offerNotExists(_token, tokenId, msg.sender)
         returns(bool)
     {   
         require(
@@ -84,8 +70,10 @@ contract NFTMarketplace is Ownable {
                 "token not approved"
             );
         require(checkLock(_token, tokenId), "token is locked");
+        require(userOffers[_token][tokenId][msg.sender].payToken == address(0), "offer already created");
 
         LockNFT(_token).transferFrom(msg.sender, address(this), tokenId);
+
         userOffers[_token][tokenId][msg.sender] = (OfferData(
             {minTime: minTime, 
             maxTime: maxTime, 
@@ -117,8 +105,11 @@ contract NFTMarketplace is Ownable {
             );
 
         for(uint i = 0; i < tokenIds.length; i++) {
+            require(userOffers[_token][tokenIds[i]][msg.sender].payToken == address(0), "offer already created");
             require(checkLock(_token, tokenIds[i]), "token is locked");
+
             LockNFT(_token).transferFrom(msg.sender, address(this), tokenIds[i]);
+
             userOffers[_token][tokenIds[i]][msg.sender] = (OfferData(
                 {minTime: minTimes[i], 
                 maxTime: maxTimes[i], 
