@@ -61,8 +61,7 @@ contract NFTMarketplace is Ownable {
         uint256 price, 
         uint256 discountPrice
     )
-        public 
-        payable
+        public
         returns(bool)
     {   
         require(
@@ -95,8 +94,7 @@ contract NFTMarketplace is Ownable {
         uint256[] calldata maxTimes, 
         uint256[] calldata prices
     )
-        public 
-        payable
+        public
         returns(bool)
     {   
         require(
