@@ -37,6 +37,8 @@ module.exports = {
     },
     bsc: {
       url: process.env.RPC_NODE_URL_BSCTESTNET,
+      gasPrice: 50000000000, //50 gwei
+      timeout: 3600000,
       accounts: [process.env.PRIVATE_KEY]
     },
     mainnet: {

@@ -3,14 +3,14 @@ const fs = require("fs");
 
 async function main() {
   const dir = "./networks/";
-  const fileName = "MockNFT_" + `${network}.json`;
+  const fileName = "LockNFT_" + `${network}.json`;
   const data = JSON.parse(await fs.readFileSync(dir + fileName, { encoding: "utf8" }));
 
   try {
     await hre.run("verify:verify", {
-      address: data.MockNFT,
+      address: data.LockNFT,
       constructorArguments: [process.env.NFT_URI],
-      contract: "contracts/MockNFT.sol:MockNFT",
+      contract: "contracts/LockNFT.sol:LockNFT",
     });
   } catch (e) {
     console.log(e);
