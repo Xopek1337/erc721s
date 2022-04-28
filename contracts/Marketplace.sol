@@ -144,8 +144,6 @@ contract NFTMarketplace is Ownable {
         for(uint i = 0; i < tokenIds.length; i++) {
             require(userOffers[_token][tokenIds[i]][msg.sender].payToken != address(0), "offer is not exist");
 
-            LockNFT(_token).transferFrom(msg.sender, address(this), tokenIds[i]);
-
             userOffers[_token][tokenIds[i]][msg.sender].discountPrice = discountPrices[i] + discountPrices[i] * fee / feeMutltipier;
             userOffers[_token][tokenIds[i]][msg.sender].startDiscountTime = startDiscountTimes[i];
         }
@@ -198,7 +196,7 @@ contract NFTMarketplace is Ownable {
 
         LockNFT(_token).transferFrom(address(this), msg.sender, tokenId);
         LockNFT(_token).lock(address(this), tokenId);
-        
+
         userOffers[_token][tokenId][landlord].endTime = rentTime * day + block.timestamp;
 
         return true;
