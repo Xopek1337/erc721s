@@ -230,8 +230,9 @@ contract NFTMarketplace is Ownable {
     function requestRefundToken(address _token, address landlord, uint _tokenId, uint _payoutAmount, bool isRenter) 
         public
         returns(bool)
-    {
-        require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
+    {   
+        address _payToken = userOffers[_token][_tokenId][landlord].payToken;
+        require(_payToken != address(0), "offer is not exist");
         
         if(isRenter) {
             require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "caller should be arenter");
@@ -241,6 +242,7 @@ contract NFTMarketplace is Ownable {
         }
         else {
             require(msg.sender == landlord, "caller should be a landlord");
+            require(IERC20(_payToken).allowance(landlord, address(this)) >= payoutAmount, "pay tokens is not approved");
 
             refundRequests[_token][_tokenId][landlord].isLandlordAgree = true;
             refundRequests[_token][_tokenId][landlord].payoutAmount = _payoutAmount;
