@@ -4,6 +4,7 @@ pragma solidity ^0.8.11;
 import "./LockNFT.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 
 contract NFTMarketplace is Ownable {
@@ -149,6 +150,7 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
+        console.log("Rent sender is ", msg.sender);
         require(
                 LockNFT(_token).isApprovedForAll(landlord, address(this)),
                 "token not approved"
@@ -183,8 +185,7 @@ contract NFTMarketplace is Ownable {
             price
         );
 
-        LockNFT(_token).transferFrom(address(this), msg.sender, tokenId);
-        LockNFT(_token).lock(address(this), tokenId);
+        LockNFT(_token).transferFromAndLock(address(this), msg.sender, tokenId);
 
         userOffers[_token][tokenId][landlord].endTime = rentTime * day + block.timestamp;
 

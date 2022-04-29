@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.11;
+import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -72,10 +73,15 @@ using Strings for uint256;
         
     function lock(address unlocker, uint256 id) public {
         address tokenOwner = ownerOf(id);
+        // console.log("Sender is ", msg.sender);
+        // console.log("Owner is ", tokenOwner);
+        // console.log("Get Approved is ", getApproved[id]);
+        // console.log("Approved is ", isApprovedForAll[tokenOwner][msg.sender]);
         require(msg.sender == tokenOwner || msg.sender == getApproved[id] || isApprovedForAll[tokenOwner][msg.sender]
         , "NOT_AUTHORIZED");
         require(getLocked[id] == address(0), "ALREADY_LOCKED"); 
         _lock(unlocker, id);
+        
     }
 
     function unlock(uint256 id) public {

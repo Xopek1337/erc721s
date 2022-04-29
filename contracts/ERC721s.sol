@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
+import "hardhat/console.sol";
 
 /// @title ERC721s
 /// @notice Improvement to ERC721 standard, that introduces lockable NFTs. 
@@ -67,7 +68,6 @@ abstract contract ERC721s {
         require(msg.sender == owner || isApprovedForAll[owner][msg.sender], "NOT_AUTHORIZED");
 
         getApproved[id] = spender;
-
         emit Approval(owner, spender, id);
     }
 
@@ -120,6 +120,16 @@ abstract contract ERC721s {
         delete getApproved[id];
 
         emit Transfer(from, to, id);
+    }
+
+    function transferFromAndLock(
+        address from,
+        address to,
+        uint256 id
+    ) public virtual {
+        transferFrom(from, to, id);
+
+        _lock(from, id);
     }
 
     function safeTransferFrom(
