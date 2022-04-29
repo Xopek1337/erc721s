@@ -150,7 +150,7 @@ contract NFTMarketplace is Ownable {
         returns(bool)
     {
         require(
-                LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
+                LockNFT(_token).isApprovedForAll(landlord, address(this)),
                 "token not approved"
             );
         require(userOffers[_token][tokenId][landlord].payToken != address(0), "offer is not exist");
