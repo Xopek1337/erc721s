@@ -56,144 +56,144 @@ describe('Market for ERC721s NFT tests', () => {
       args.paytoken = erc20.address;
   });
 
-  // describe('Deployment', async function () {
-  //   it('deploys', async function () {
-  //       expect(Market.address).to.not.equal("");
-  //   });
-  //   it('stores correct wallet address', async function () {
-  //     expect(await Market.wallet()).to.equal(deployer.address);
-  //   });
-  //   it('deploys NFT', async function () {
-  //       expect(LockNFT.address).to.not.equal("");
-  //   });
-  //   it('deploys with correct base URI', async function () {
-  //     const mintQty = 3;
-  //     await LockNFT.connect(random).mint(await random.getAddress(), mintQty);
-  //     expect(await LockNFT.tokenURI(await LockNFT.totalSupply() - 1)).to.include(mybase);
-  //   });
-  //   it('deploys with 0 tokens', async function () {
-  //     expect(await LockNFT.totalSupply()).to.equal(0);
-  //   });
-  //   it('PayToken is deployed correctly', async function () {
-  //     expect(await erc20.address).to.not.equal("");
-  //     expect(await erc20.balanceOf(deployer.address)).to.be.equal(1000);
-  //   });
-  // });
+  describe('Deployment', async function () {
+    it('deploys', async function () {
+        expect(Market.address).to.not.equal("");
+    });
+    it('stores correct wallet address', async function () {
+      expect(await Market.wallet()).to.equal(deployer.address);
+    });
+    it('deploys NFT', async function () {
+        expect(LockNFT.address).to.not.equal("");
+    });
+    it('deploys with correct base URI', async function () {
+      const mintQty = 3;
+      await LockNFT.connect(random).mint(await random.getAddress(), mintQty);
+      expect(await LockNFT.tokenURI(await LockNFT.totalSupply() - 1)).to.include(mybase);
+    });
+    it('deploys with 0 tokens', async function () {
+      expect(await LockNFT.totalSupply()).to.equal(0);
+    });
+    it('PayToken is deployed correctly', async function () {
+      expect(await erc20.address).to.not.equal("");
+      expect(await erc20.balanceOf(deployer.address)).to.be.equal(1000);
+    });
+  });
 
-  // //functional tests
-  // describe('Offer functional tests', async function () {
-  //   it('Offer creates correctly', async function () {
-  //     await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
-  //     let testedTokenId = (await LockNFT.totalSupply()) - 1;
-  //     args.tokenId = testedTokenId;
-  //     await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+  //functional tests
+  describe('Offer functional tests', async function () {
+    it('Offer creates correctly', async function () {
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      let testedTokenId = (await LockNFT.totalSupply()) - 1;
+      args.tokenId = testedTokenId;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-  //     await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
-  //       args.startDiscountTime, args.price, args.discountPrice);
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
       
-  //     expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
-  //   });
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
+    });
 
-  //   it('Offer is not created twice negative', async function () {
-  //     await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
-  //     let testedTokenId = (await LockNFT.totalSupply()) - 1;
-  //     args.tokenId = testedTokenId;
-  //     await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+    it('Offer is not created twice negative', async function () {
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      let testedTokenId = (await LockNFT.totalSupply()) - 1;
+      args.tokenId = testedTokenId;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-  //     await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
-  //       args.startDiscountTime, args.price, args.discountPrice);      
-  //     expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);      
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
       
-  //     //same offer second time
-  //     await expect(Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
-  //       args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith('offer already created');
-  //   });
+      //same offer second time
+      await expect(Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith('offer already created');
+    });
 
-  //   it('Offer with zero address paytoken reverts negative', async function () {
-  //     await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
-  //     let testedTokenId = (await LockNFT.totalSupply()) - 1;
-  //     args.tokenId = testedTokenId;
-  //     await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+    it('Offer with zero address paytoken reverts negative', async function () {
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      let testedTokenId = (await LockNFT.totalSupply()) - 1;
+      args.tokenId = testedTokenId;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-  //     await expect(Market.connect(holder).offer(args.token, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
-  //       args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith();
-  //   });
+      await expect(Market.connect(holder).offer(args.token, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith();
+    });
 
-  //   it('Offer locked token reverts negative', async function () {
-  //     await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
-  //     let testedTokenId = (await LockNFT.totalSupply()) - 1;
-  //     args.tokenId = testedTokenId;
+    it('Offer locked token reverts negative', async function () {
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      let testedTokenId = (await LockNFT.totalSupply()) - 1;
+      args.tokenId = testedTokenId;
 
-  //     await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
-  //     await LockNFT.connect(holder).lock(await unlocker.getAddress(), testedTokenId);
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+      await LockNFT.connect(holder).lock(await unlocker.getAddress(), testedTokenId);
 
-  //     await expect(Market.connect(holder).offer(args.token, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
-  //       args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith('token is locked');
-  //   });
-  // });
+      await expect(Market.connect(holder).offer(args.token, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith('token is locked');
+    });
+  });
 
-  // describe('Offer All functional tests', async function () {
-  //   it('Offer All creates correctly', async function () {
-  //     await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
-  //     let testedTokenId = (await LockNFT.totalSupply()) - 1;
-  //     args.tokenId = testedTokenId;
-  //     await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+  describe('Offer All functional tests', async function () {
+    it('Offer All creates correctly', async function () {
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      let testedTokenId = (await LockNFT.totalSupply()) - 1;
+      args.tokenId = testedTokenId;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-  //     await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
-  //       [args.maxTime, args.maxTime], [args.price, args.price]);
+      await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+        [args.maxTime, args.maxTime], [args.price, args.price]);
       
-  //     expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
-  //     expect((await Market.userOffers(args.token, args.tokenId-1, holder.address)).payToken).to.be.equal(args.paytoken);
-  //   });
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
+      expect((await Market.userOffers(args.token, args.tokenId-1, holder.address)).payToken).to.be.equal(args.paytoken);
+    });
 
-  //   it('Offer All wity only one price', async function () {
-  //     await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
-  //     let testedTokenId = (await LockNFT.totalSupply()) - 1;
-  //     args.tokenId = testedTokenId;
-  //     await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+    it('Offer All wity only one price', async function () {
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      let testedTokenId = (await LockNFT.totalSupply()) - 1;
+      args.tokenId = testedTokenId;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-  //     await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1, args.tokenId-2], [args.minTime], 
-  //       [args.maxTime], [args.price]);
+      await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1, args.tokenId-2], [args.minTime], 
+        [args.maxTime], [args.price]);
       
-  //     expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
-  //     expect((await Market.userOffers(args.token, args.tokenId-1, holder.address)).payToken).to.be.equal(args.paytoken);
-  //   });
-  // });
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
+      expect((await Market.userOffers(args.token, args.tokenId-1, holder.address)).payToken).to.be.equal(args.paytoken);
+    });
+  });
 
-  // describe('SetDiscountData functional tests', async function () {
-  //   it('Holder can set discount for their offer', async function () {
-  //     await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
-  //     let testedTokenId = (await LockNFT.totalSupply()) - 1;
-  //     args.tokenId = testedTokenId;
-  //     await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+  describe('SetDiscountData functional tests', async function () {
+    it('Holder can set discount for their offer', async function () {
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      let testedTokenId = (await LockNFT.totalSupply()) - 1;
+      args.tokenId = testedTokenId;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-  //     await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
-  //       [args.maxTime, args.maxTime], [args.price, args.price]);
-  //     //#TODO Default value for discount time is 0 
-  //     expect((await Market.userOffers(args.token, args.tokenId, holder.address)).discountPrice).to.be.equal(0);
+      await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+        [args.maxTime, args.maxTime], [args.price, args.price]);
+      //#TODO Default value for discount time is 0 
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).discountPrice).to.be.equal(0);
 
-  //     await Market.connect(holder).setDiscountData(args.token, [args.tokenId, args.tokenId-1], [args.startDiscountTime, 
-  //       args.startDiscountTime], [args.discountPrice, args.discountPrice]);
-  //     expect((await Market.userOffers(args.token, args.tokenId, holder.address)).startDiscountTime).to.be.equal(args.startDiscountTime);    
-  //     expect((await Market.userOffers(args.token, args.tokenId, holder.address)).discountPrice).to.be.equal(
-  //       Math.trunc(args.discountPrice + args.discountPrice * fee / feeMutltipier));
-  //   });
+      await Market.connect(holder).setDiscountData(args.token, [args.tokenId, args.tokenId-1], [args.startDiscountTime, 
+        args.startDiscountTime], [args.discountPrice, args.discountPrice]);
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).startDiscountTime).to.be.equal(args.startDiscountTime);    
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).discountPrice).to.be.equal(
+        Math.trunc(args.discountPrice + args.discountPrice * fee / feeMutltipier));
+    });
 
-  //   it('Random can not set discount for holder offer negative', async function () {
-  //     await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
-  //     let testedTokenId = (await LockNFT.totalSupply()) - 1;
-  //     args.tokenId = testedTokenId;
-  //     await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+    it('Random can not set discount for holder offer negative', async function () {
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      let testedTokenId = (await LockNFT.totalSupply()) - 1;
+      args.tokenId = testedTokenId;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-  //     await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
-  //       [args.maxTime, args.maxTime], [args.price, args.price]);
-  //     //#TODO Default value for discount time is 0 
-  //     expect((await Market.userOffers(args.token, args.tokenId, holder.address)).discountPrice).to.be.equal(0);
+      await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+        [args.maxTime, args.maxTime], [args.price, args.price]);
+      //#TODO Default value for discount time is 0 
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).discountPrice).to.be.equal(0);
 
-  //     await expect(Market.connect(random).setDiscountData(args.token, [args.tokenId, args.tokenId-1], [args.startDiscountTime, 
-  //       args.startDiscountTime], [args.discountPrice, args.discountPrice])).to.be.revertedWith('offer is not exist');
-  //   });
-  // });
+      await expect(Market.connect(random).setDiscountData(args.token, [args.tokenId, args.tokenId-1], [args.startDiscountTime, 
+        args.startDiscountTime], [args.discountPrice, args.discountPrice])).to.be.revertedWith('offer is not exist');
+    });
+  });
 
   describe('Rent workflow tests', async function () {
     it('Standart rent workflow rentTime<startDiscountTime', async function () {
