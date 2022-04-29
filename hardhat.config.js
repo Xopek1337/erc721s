@@ -9,7 +9,7 @@
  require("dotenv").config();
  require("hardhat-deploy");
  
- const {alchemyApiKeyMain} = require('./secrets.json');
+ //const {alchemyApiKeyMain} = require('./secrets.json');
  
 module.exports = {
   solidity: "0.8.11",
@@ -41,11 +41,11 @@ module.exports = {
       timeout: 3600000,
       accounts: [process.env.PRIVATE_KEY]
     },
-    mainnet: {
-      url: `https://eth-mainnet.alchemyapi.io/v2/${alchemyApiKeyMain}`,
-      gasPrice: 100000000000, //100 gwei
-      accounts: [process.env.PRIVATE_KEY]
-    }
+    // mainnet: {
+    //   url: `https://eth-mainnet.alchemyapi.io/v2/${alchemyApiKeyMain}`,
+    //   gasPrice: 100000000000, //100 gwei
+    //   accounts: [process.env.PRIVATE_KEY]
+    // }
   },
   etherscan: {
     apiKey: process.env.SCAN_API_KEY_BSC

@@ -126,7 +126,7 @@ async function signPermitAll(signer, spender, nonce, deadline, holder) {
       // get chainId
       chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
 
-      const MockNFT = await ethers.getContractFactory('MockNFT', deployer);
+      const MockNFT = await ethers.getContractFactory('LockNFT', deployer);
       nftContract = await MockNFT.deploy(mybase);
   });
 
