@@ -150,7 +150,6 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
-        console.log("Rent sender is ", msg.sender);
         require(
                 LockNFT(_token).isApprovedForAll(landlord, address(this)),
                 "token not approved"
