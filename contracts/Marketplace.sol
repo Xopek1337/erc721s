@@ -275,6 +275,7 @@ contract NFTMarketplace is Ownable {
                     _payoutAmount
                 );
                 LockNFT(_token).transferFrom(renter, landlord, _tokenId);
+                refundRequests[_token][_tokenId][landlord].isRenterAgree = true;
             }
             else {
                 revert("landlord does not agree to the refund");
@@ -290,6 +291,7 @@ contract NFTMarketplace is Ownable {
                     _payoutAmount
                 );
                 LockNFT(_token).transferFrom(renter, landlord, _tokenId);
+                refundRequests[_token][_tokenId][landlord].isLandlordAgree = true;
             }
             else {
                 revert("renter does not agree to the refund");
