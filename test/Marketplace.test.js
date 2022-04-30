@@ -40,8 +40,8 @@ describe('Market for ERC721s NFT tests', () => {
       // get chainId
       chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
 
-      const NFTMarketplaceInstance = await ethers.getContractFactory('NFTMarketplace', deployer);
-      Market = await NFTMarketplaceInstance.deploy(deployer.address, fee);
+      const MarketInstance = await ethers.getContractFactory('NFTMarketplace', deployer);
+      Market = await MarketInstance.deploy(deployer.address, fee);
 
       const LockNFTInstance = await ethers.getContractFactory('LockNFT');
       LockNFT = await LockNFTInstance.deploy(mybase);
@@ -241,8 +241,8 @@ describe('Market for ERC721s NFT tests', () => {
   //   });
   // });
 
-  describe("BackToken functional", async function () {
-    it("backToken default", async function () {
+  describe("BackToken tests", async function () {
+    it("backToken functional default", async function () {
       //offer-rent logic
       const rentTime = 1;
       await erc20.connect(locker).approve(Market.address, 100000000);
@@ -251,9 +251,12 @@ describe('Market for ERC721s NFT tests', () => {
       await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
       await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
+
+      expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
+
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
 
-      //start backToken process
+      //time travel
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const timestampBefore = (await ethers.provider.getBlock(blockNumBefore)).timestamp;
 
@@ -262,12 +265,85 @@ describe('Market for ERC721s NFT tests', () => {
 
       const blockNumNow = await ethers.provider.getBlockNumber();
       const timestampNow = (await ethers.provider.getBlock(blockNumNow)).timestamp;
-      expect(timestampNow - timestampBefore).to.be.equal(rentTime*day);  
 
-
+      expect(Math.trunc((timestampNow - timestampBefore)/10)).to.be.equal(Math.trunc(rentTime*day/10));
 
       await Market.connect(holder).backToken(args.token, holder.address, args.tokenId);
 
+      expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(holder.address);
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(ZERO_ADDRESS);
+    });
+  });
+
+  describe("BackTokenAdmin tests", async function () {
+    it("backTokenAdmin functional default", async function () {
+      //offer-rent logic
+      const rentTime = 1;
+      await erc20.connect(locker).approve(Market.address, 100000000);
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      args.tokenId = (await LockNFT.totalSupply()) - 1;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+
+      expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
+
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+
+      //time travel
+      const blockNumBefore = await ethers.provider.getBlockNumber();
+      const timestampBefore = (await ethers.provider.getBlock(blockNumBefore)).timestamp;
+
+      await ethers.provider.send('evm_increaseTime', [rentTime*day]);
+      await ethers.provider.send('evm_mine');
+
+      const blockNumNow = await ethers.provider.getBlockNumber();
+      const timestampNow = (await ethers.provider.getBlock(blockNumNow)).timestamp;
+
+      expect(Math.trunc((timestampNow - timestampBefore)/10)).to.be.equal(Math.trunc(rentTime*day/10));
+      
+      await expect(Market.connect(holder).backTokenAdmin(args.token, holder.address, args.tokenId)).to.be.revertedWith(
+        "Ownable: caller is not the owner");
+      await Market.connect(deployer).backTokenAdmin(args.token, holder.address, args.tokenId);
+
+      expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(holder.address);
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(ZERO_ADDRESS);
+    });
+  });
+
+  describe("BackTokenAdmin tests", async function () {
+    it("backTokenAdmin functional default", async function () {
+      //offer-rent logic
+      const rentTime = 1;
+      await erc20.connect(locker).approve(Market.address, 100000000);
+      await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
+      args.tokenId = (await LockNFT.totalSupply()) - 1;
+      await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+
+      expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
+
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+
+      //time travel
+      const blockNumBefore = await ethers.provider.getBlockNumber();
+      const timestampBefore = (await ethers.provider.getBlock(blockNumBefore)).timestamp;
+
+      await ethers.provider.send('evm_increaseTime', [rentTime*day]);
+      await ethers.provider.send('evm_mine');
+
+      const blockNumNow = await ethers.provider.getBlockNumber();
+      const timestampNow = (await ethers.provider.getBlock(blockNumNow)).timestamp;
+
+      expect(Math.trunc((timestampNow - timestampBefore)/10)).to.be.equal(Math.trunc(rentTime*day/10));
+      
+      await expect(Market.connect(holder).backTokenAdmin(args.token, holder.address, args.tokenId)).to.be.revertedWith(
+        "Ownable: caller is not the owner");
+      await Market.connect(deployer).backTokenAdmin(args.token, holder.address, args.tokenId);
+
+      expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(holder.address);
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(ZERO_ADDRESS);
     });
   });
 });
