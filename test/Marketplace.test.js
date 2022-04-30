@@ -311,8 +311,8 @@ describe('Market for ERC721s NFT tests', () => {
     });
   });
 
-  describe("BackTokenAdmin tests", async function () {
-    it("backTokenAdmin functional default", async function () {
+  describe("RefundToken tests", async function () {
+    it("request+accept scen default", async function () {
       //offer-rent logic
       const rentTime = 1;
       await erc20.connect(locker).approve(Market.address, 100000000);
@@ -338,12 +338,18 @@ describe('Market for ERC721s NFT tests', () => {
 
       expect(Math.trunc((timestampNow - timestampBefore)/10)).to.be.equal(Math.trunc(rentTime*day/10));
       
-      await expect(Market.connect(holder).backTokenAdmin(args.token, holder.address, args.tokenId)).to.be.revertedWith(
-        "Ownable: caller is not the owner");
-      await Market.connect(deployer).backTokenAdmin(args.token, holder.address, args.tokenId);
+      const payAmount = 1000;
+      await Market.connect(locker).requestRefundToken(args.token, holder.address, args.tokenId, payAmount, true);
+      
+      expect((await Market.refundRequests(args.token, args.tokenId, holder.address)).payoutAmount).to.be.equal(payAmount);
+      expect((await Market.refundRequests(args.token, args.tokenId, holder.address)).isRenterAgree).to.be.equal(true);
+      
+      await Market.connect(holder).acceptRefundToken(args.token, holder.address, args.tokenId, payAmount, true);
+      expect((await Market.refundRequests(args.token, args.tokenId, holder.address)).isLandlordAgree).to.be.equal(true);
 
+      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).price * rentTime + payAmount).to.be.equal(
+        await erc20.balanceOf(holder.address)-10000000);
       expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(holder.address);
-      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(ZERO_ADDRESS);
     });
   });
 });
