@@ -333,14 +333,16 @@ contract NFTMarketplace is Ownable {
 
         address _payToken = userOffers[_token][_tokenId][landlord].payToken;
         uint _extendedTime = extendRequests[_token][_tokenId][landlord].extendedTime;
-
+        address renter = LockNFT(_token).ownerOf(_tokenId);
+        
         if(extendRequests[_token][_tokenId][landlord].isRenterAgree == true) {
             IERC20(_payToken).transferFrom(
-                msg.sender,
+                renter,
                 landlord,
                 _payoutAmount
             );
             userOffers[_token][_tokenId][landlord].endTime += _extendedTime * day;
+            extendRequests[_token][_tokenId][landlord].isLandlordAgree = true;
         }
         else {
             revert("renter does not agree to the extend rent");

@@ -345,6 +345,24 @@ describe('Market for ERC721s NFT tests', () => {
 
   describe("ExtendRent tests", async function () {
     it("request functional default", async function () {
+      const rentTime = 1;
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+
+      expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
+
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+      
+      const _payAmount = 1000;
+      const _extendedTime = 100;
+      await Market.connect(locker).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, _extendedTime);
+      
+      expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).payoutAmount).to.be.equal(_payAmount);
+      expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).isRenterAgree).to.be.equal(true);
+      expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).extendedTime).to.be.equal(_extendedTime);
+    });
+
+    it("request-accept scen default", async function () {
       //offer-rent logic
       const rentTime = 1;
       await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
@@ -353,32 +371,28 @@ describe('Market for ERC721s NFT tests', () => {
       expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
 
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+      
+      const _payAmount = 1000;
+      const _extendedTime = 100;
+      await Market.connect(locker).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, _extendedTime);
+      
+      expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).payoutAmount).to.be.equal(_payAmount);
+      expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).isRenterAgree).to.be.equal(true);
+      expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).extendedTime).to.be.equal(_extendedTime);
 
-      //time travel
+      const holderBalance = await erc20.balanceOf(holder.address);
+      await Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, _payAmount, false);
+      
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const timestampBefore = (await ethers.provider.getBlock(blockNumBefore)).timestamp;
 
-      await ethers.provider.send('evm_increaseTime', [rentTime*day]);
-      await ethers.provider.send('evm_mine');
+      expect(Math.trunc((await Market.userOffers(args.token, args.tokenId, holder.address)).endTime/1000)).to.be.equal(
+        Math.trunc((timestampBefore + (rentTime + _extendedTime) * day)/1000));
+      expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).isLandlordAgree).to.be.equal(true);
+      expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).isRenterAgree).to.be.equal(true);
 
-      const blockNumNow = await ethers.provider.getBlockNumber();
-      const timestampNow = (await ethers.provider.getBlock(blockNumNow)).timestamp;
-
-      expect(Math.trunc((timestampNow - timestampBefore)/10)).to.be.equal(Math.trunc(rentTime*day/10));
-      
-      const payAmount = 1000;
-      await Market.connect(locker).requestRefundToken(args.token, holder.address, args.tokenId, payAmount, true);
-      
-      expect((await Market.refundRequests(args.token, args.tokenId, holder.address)).payoutAmount).to.be.equal(payAmount);
-      expect((await Market.refundRequests(args.token, args.tokenId, holder.address)).isRenterAgree).to.be.equal(true);
-      
-      const lockerBalance = await erc20.balanceOf(locker.address);
-      await Market.connect(holder).acceptRefundToken(args.token, holder.address, args.tokenId, payAmount, false);
-
-      expect((await Market.refundRequests(args.token, args.tokenId, holder.address)).isLandlordAgree).to.be.equal(true);
-
-      expect(parseInt(lockerBalance)+1000).to.be.equal(await erc20.balanceOf(locker.address));
-      expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(holder.address);
+      expect(parseInt(holderBalance)+_payAmount).to.be.equal(await erc20.balanceOf(holder.address));
+      expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(locker.address);
     });
   });
 });
