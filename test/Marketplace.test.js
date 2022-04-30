@@ -394,6 +394,6 @@ describe('Market for ERC721s NFT tests', () => {
       expect(parseInt(holderBalance)+_payAmount).to.be.equal(await erc20.balanceOf(holder.address));
       expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(locker.address);
     });
-  });
+  });  
 });
   

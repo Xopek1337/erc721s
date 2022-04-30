@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
-import "hardhat/console.sol";
 
 /// @title ERC721s
 /// @notice Improvement to ERC721 standard, that introduces lockable NFTs. 
