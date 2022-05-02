@@ -67,6 +67,7 @@ contract NFTMarketplace is Ownable {
                 LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
             );
+        require(payToken != address(0), "ZERO_ADDRESS");
         require(checkLock(_token, tokenId), "token is locked");
         require(userOffers[_token][tokenId][msg.sender].payToken == address(0), "offer already created");
 
@@ -100,6 +101,7 @@ contract NFTMarketplace is Ownable {
                 LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
             );
+        require(payToken != address(0), "ZERO_ADDRESS");
 
         for(uint i = 0; i < tokenIds.length; i++) {
             require(userOffers[_token][tokenIds[i]][msg.sender].payToken == address(0), "offer already created");
@@ -112,7 +114,7 @@ contract NFTMarketplace is Ownable {
                 maxTime: maxTimes[i], 
                 startDiscountTime: 0, 
                 price: (prices[i] + prices[i] * fee / feeMutltipier), 
-                discountPrice: 0, 
+                discountPrice: (prices[i] + prices[i] * fee / feeMutltipier), 
                 endTime: 0, 
                 payToken: payToken}
             ));
@@ -149,7 +151,7 @@ contract NFTMarketplace is Ownable {
         returns(bool)
     {
         require(
-                LockNFT(_token).isApprovedForAll(landlord, address(this)),
+                LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
             );
         require(userOffers[_token][tokenId][landlord].payToken != address(0), "offer is not exist");
@@ -182,7 +184,8 @@ contract NFTMarketplace is Ownable {
             price
         );
 
-        LockNFT(_token).transferFromAndLock(address(this), msg.sender, tokenId);
+        LockNFT(_token).transferFrom(address(this), msg.sender, tokenId);
+        LockNFT(_token).lock(address(this), tokenId);
 
         userOffers[_token][tokenId][landlord].endTime = rentTime * day + block.timestamp;
 
@@ -273,7 +276,6 @@ contract NFTMarketplace is Ownable {
                     _payoutAmount
                 );
                 LockNFT(_token).transferFrom(renter, landlord, _tokenId);
-                refundRequests[_token][_tokenId][landlord].isRenterAgree = true;
             }
             else {
                 revert("landlord does not agree to the refund");
@@ -289,13 +291,13 @@ contract NFTMarketplace is Ownable {
                     _payoutAmount
                 );
                 LockNFT(_token).transferFrom(renter, landlord, _tokenId);
-                refundRequests[_token][_tokenId][landlord].isLandlordAgree = true;
             }
             else {
                 revert("renter does not agree to the refund");
             }
         }
 
+        delete (refundRequests[_token][_tokenId][landlord]);
         delete (userOffers[_token][_tokenId][landlord]);
 
         return true;
@@ -340,12 +342,12 @@ contract NFTMarketplace is Ownable {
                 _payoutAmount
             );
             userOffers[_token][_tokenId][landlord].endTime += _extendedTime * day;
-            extendRequests[_token][_tokenId][landlord].isLandlordAgree = true;
         }
         else {
             revert("renter does not agree to the extend rent");
         }
 
+        delete (extendRequests[_token][_tokenId][landlord]);
         return true;
     }
 
