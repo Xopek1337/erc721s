@@ -6,7 +6,9 @@ contracts/backup
 .env
 networks
 .vscode
-.lock
+yarn.lock
+coverage
+
 
 #Hardhat files
 cache
