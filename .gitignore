@@ -8,7 +8,7 @@ networks
 .vscode
 yarn.lock
 coverage
-
+coverage.json
 
 #Hardhat files
 cache
