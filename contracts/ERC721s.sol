@@ -121,16 +121,6 @@ abstract contract ERC721s {
         emit Transfer(from, to, id);
     }
 
-    function transferFromAndLock(
-        address from,
-        address to,
-        uint256 id
-    ) public virtual {
-        transferFrom(from, to, id);
-
-        _lock(from, id);
-    }
-
     function safeTransferFrom(
         address from,
         address to,

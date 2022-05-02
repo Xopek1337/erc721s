@@ -76,7 +76,6 @@ using Strings for uint256;
         , "NOT_AUTHORIZED");
         require(getLocked[id] == address(0), "ALREADY_LOCKED"); 
         _lock(unlocker, id);
-        
     }
 
     function unlock(uint256 id) public {
