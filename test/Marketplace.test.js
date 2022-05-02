@@ -161,6 +161,11 @@ describe('Market for ERC721s NFT tests', () => {
         [args.maxTime, args.maxTime], [args.price, args.price])).to.be.revertedWith('token is locked');
     });
 
+    it('OfferAll with zero address paytoken reverts negative', async function () {
+      await expect(Market.connect(holder).offerAll(args.token, ZERO_ADDRESS, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+        [args.maxTime, args.maxTime], [args.price, args.price])).to.be.revertedWith("ZERO_ADDRESS");
+    });
+
     it('Offer All wity only one price', async function () {
       await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
       let testedTokenId = (await LockNFT.totalSupply()) - 1;
@@ -473,6 +478,69 @@ describe('Market for ERC721s NFT tests', () => {
         payAmount, false)).to.be.revertedWith('caller should be a landlord');
     });
 
+    it("requestRefund by landlord zero approved balance negative", async function () {
+      const rentTime = 1;
+      await erc20.connect(holder).approve(Market.address, 0);
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+
+      const payAmount = 1000;
+      await expect(Market.connect(holder).requestRefundToken(args.token, holder.address, args.tokenId, 
+        payAmount, false)).to.be.revertedWith('pay tokens is not approved');
+    });
+  });
+
+  describe("acceptRefund tests", async function () {
+    it("acceptRefund request not exist negative", async function () {
+      const payAmount = 1000;
+      await expect(Market.connect(locker).acceptRefundToken(args.token, holder.address, args.tokenId, 
+        payAmount, true)).to.be.revertedWith('offer is not exist');
+    });
+
+    it("acceptRefund payamount invalid negative", async function () {
+      const rentTime = 1;
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+
+
+      const payAmount = 1000;
+      await Market.connect(locker).requestRefundToken(args.token, holder.address, args.tokenId, payAmount, true);
+
+      await expect(Market.connect(locker).acceptRefundToken(args.token, holder.address, args.tokenId, 
+        payAmount-100, true)).to.be.revertedWith('invalid payout amount');
+    });
+
+    it("acceptRefund by random (request by locker) negative", async function () {
+      const rentTime = 1;
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+
+
+      const payAmount = 1000;
+      await Market.connect(locker).requestRefundToken(args.token, holder.address, args.tokenId, payAmount, true);
+
+      await expect(Market.connect(random).acceptRefundToken(args.token, holder.address, args.tokenId, 
+        payAmount, false)).to.be.revertedWith('caller should be a landlord');
+    });
+
+    it("acceptRefund by random (request by landlord) negative", async function () {
+      const rentTime = 1;
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+
+
+      const payAmount = 1000;
+      await Market.connect(holder).requestRefundToken(args.token, holder.address, args.tokenId, payAmount, false);
+
+      await expect(Market.connect(random).acceptRefundToken(args.token, holder.address, args.tokenId, 
+        payAmount, true)).to.be.revertedWith('caller should be a renter');
+    });
+
+
     it("acceptRefund landlord is not agree negative", async function () {
       const rentTime = 1;
       await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
@@ -498,6 +566,7 @@ describe('Market for ERC721s NFT tests', () => {
         payAmount, false)).to.be.revertedWith('renter does not agree to the refund');
     });
   });
+
 
   describe("ExtendRent tests", async function () {
     it("request functional default", async function () {
@@ -547,6 +616,70 @@ describe('Market for ERC721s NFT tests', () => {
 
       expect(parseInt(holderBalance)+_payAmount).to.be.equal(await erc20.balanceOf(holder.address));
       expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(locker.address);
+    });
+
+    it("requestExtendRent offer not exists negative", async function () {
+      const _payAmount = 1000;
+      const _extendedTime = 100;
+      await expect(Market.connect(holder).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, 
+        _extendedTime)).to.be.revertedWith('offer is not exist');
+    });
+
+    it("requestExtendRent offer not exists negative", async function () {
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+      const _payAmount = 1000;
+      const _extendedTime = 100;
+      await expect(Market.connect(random).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, 
+        _extendedTime)).to.be.revertedWith('caller should be a renter');
+    });
+  });
+
+  describe("acceptExtendRent tests", async function () {
+    it("acceptExtendRent offer not exists negative", async function () {
+      await expect(Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, 
+        0, false)).to.be.revertedWith('offer is not exist');
+    });
+
+    it("acceptExtendRent offer not landlord negative", async function () {
+      const rentTime = 1;
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+      const _payAmount = 1000;
+      const _extendedTime = 100;
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+      await Market.connect(locker).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, _extendedTime);
+
+      await expect(Market.connect(random).acceptExtendRent(args.token, holder.address, args.tokenId, 
+        0, false)).to.be.revertedWith('caller should be a landlord');
+    });
+
+    it("acceptExtendRent invalid payamount negative", async function () {
+      const rentTime = 1;
+      const _payAmount = 1000;
+      const _extendedTime = 100;
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+      await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+      await Market.connect(locker).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, _extendedTime);
+
+      await expect(Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, 
+        0, false)).to.be.revertedWith('invalid payout amount');
+    });
+
+    it("acceptExtendRent renter is not agree negative", async function () {
+      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+        args.startDiscountTime, args.price, args.discountPrice);
+
+      await expect(Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, 
+        0, false)).to.be.revertedWith('renter does not agree to the extend rent');
+    });
+  });
+
+  describe("checkLock tests", async function () {
+    it("checkLock negative", async function () {
+      await expect(Market.checkLock(Market.address, args.tokenId)).to.be.revertedWith(
+        "contract does not support locking");
     });
   });
 
