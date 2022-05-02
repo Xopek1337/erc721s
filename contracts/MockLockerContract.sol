@@ -68,4 +68,13 @@ using Strings for uint256;
 
 }
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract ERC20G is ERC20 {
+    constructor(address[] memory accounts) ERC20("GTK", "Gold") {
+        for(uint i = 0; i<accounts.length; i++){
+            _mint(accounts[i], 10000000);
+        }
+    }
+}
 

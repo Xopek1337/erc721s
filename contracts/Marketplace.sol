@@ -68,6 +68,7 @@ contract NFTMarketplace is Ownable {
                 LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
             );
+        require(payToken != address(0), "ZERO_ADDRESS");
         require(checkLock(_token, tokenId), "token is locked");
         require(userOffers[_token][tokenId][msg.sender].payToken == address(0), "offer already created");
 
@@ -101,6 +102,7 @@ contract NFTMarketplace is Ownable {
                 LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
             );
+        require(payToken != address(0), "ZERO_ADDRESS");
 
         for(uint i = 0; i < tokenIds.length; i++) {
             require(userOffers[_token][tokenIds[i]][msg.sender].payToken == address(0), "offer already created");
@@ -113,7 +115,7 @@ contract NFTMarketplace is Ownable {
                 maxTime: maxTimes[i], 
                 startDiscountTime: 0, 
                 price: (prices[i] + prices[i] * fee / feeMutltipier), 
-                discountPrice: 0, 
+                discountPrice: (prices[i] + prices[i] * fee / feeMutltipier), 
                 endTime: 0, 
                 payToken: payToken}
             ));
@@ -296,6 +298,7 @@ contract NFTMarketplace is Ownable {
             }
         }
 
+        delete (refundRequests[_token][_tokenId][landlord]);
         delete (userOffers[_token][_tokenId][landlord]);
 
         return true;
@@ -331,10 +334,11 @@ contract NFTMarketplace is Ownable {
 
         address _payToken = userOffers[_token][_tokenId][landlord].payToken;
         uint _extendedTime = extendRequests[_token][_tokenId][landlord].extendedTime;
-
+        address renter = LockNFT(_token).ownerOf(_tokenId);
+        
         if(extendRequests[_token][_tokenId][landlord].isRenterAgree == true) {
             IERC20(_payToken).transferFrom(
-                msg.sender,
+                renter,
                 landlord,
                 _payoutAmount
             );
@@ -344,6 +348,7 @@ contract NFTMarketplace is Ownable {
             revert("renter does not agree to the extend rent");
         }
 
+        delete (extendRequests[_token][_tokenId][landlord]);
         return true;
     }
 

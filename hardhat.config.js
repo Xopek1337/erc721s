@@ -8,6 +8,8 @@
  require('hardhat-contract-sizer');
  require("dotenv").config();
  require("hardhat-deploy");
+ require('solidity-coverage')
+
  
  //const {alchemyApiKeyMain} = require('./secrets.json');
  
@@ -55,4 +57,5 @@ module.exports = {
     runOnCompile: true,
     disambiguatePaths: false,
   },
+  plugins: ["solidity-coverage"]
 };
