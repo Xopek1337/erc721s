@@ -76,5 +76,9 @@ contract ERC20G is ERC20 {
             _mint(accounts[i], 10000000);
         }
     }
+
+    function supportsInterface(bytes4 interfaceId) public pure virtual returns (bool) {
+        return interfaceId == 0x01ffc9a7; // ERC165 Interface ID for ERC165
+    }
 }
 

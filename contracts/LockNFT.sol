@@ -62,7 +62,7 @@ using Strings for uint256;
 
     function mint(address to, uint256 qty) public {
         // require minting authorization here
-        require(totalSupply + qty <= MAX_ITEMS, ">MaxSupply");
+        require(totalSupply() + qty <= MAX_ITEMS, ">MaxSupply");
         _safeMint(to, qty); 
     }
 
@@ -241,7 +241,7 @@ using Strings for uint256;
             uint256[] memory result = new uint256[](tokenCount);
             uint256 resultIndex = 0;
             uint256 NFTId;
-            for (NFTId = 1; NFTId <= totalSupply; NFTId++) { 
+            for (NFTId = 1; NFTId <= totalSupply(); NFTId++) { 
                 if (ownerOf(NFTId) == tokenOwner) {  
                     result[resultIndex] = NFTId;
                     resultIndex++;
@@ -263,7 +263,6 @@ using Strings for uint256;
     ) external pure returns(bytes4) {
         return bytes4(keccak256("I do not receive ERC721"));
     } 
-
 }
 
 //   That's all, folks!

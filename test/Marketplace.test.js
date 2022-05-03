@@ -80,6 +80,10 @@ describe('Market for ERC721s NFT tests', () => {
       expect(await erc20.address).to.not.equal("");
       expect(await erc20.balanceOf(deployer.address)).to.be.equal(10000000);
     });
+    it('Failed deployment if wallet is zero address', async function () {
+      const MarketInstanceFail = await ethers.getContractFactory('NFTMarketplace', deployer);
+      await expect(MarketInstanceFail.deploy(ZERO_ADDRESS, fee)).to.be.revertedWith('ZERO_ADDRESS');
+    });
   });
 
   //functional tests
@@ -678,7 +682,7 @@ describe('Market for ERC721s NFT tests', () => {
 
   describe("checkLock tests", async function () {
     it("checkLock negative", async function () {
-      await expect(Market.checkLock(Market.address, args.tokenId)).to.be.revertedWith(
+      await expect(Market.checkLock(erc20.address, args.tokenId)).to.be.revertedWith(
         "contract does not support locking");
     });
   });

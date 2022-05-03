@@ -4,15 +4,16 @@ pragma solidity ^0.8.11;
 import "./LockNFT.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract NFTMarketplace is Ownable {
     bytes4 private constant FUNC_SELECTOR = bytes4(keccak256("getLocked(uint256)"));
+    bytes4 private constant INTERFACE_ID_ERC721 = 0x80ac58cd;
 
     address public wallet; 
     uint256 public fee;
     uint256 public feeMutltipier = 200;
-    uint256 public day = 86400;
+    uint256 public day = 1 days;
 
     struct OfferData {
         uint256 minTime;
@@ -37,16 +38,15 @@ contract NFTMarketplace is Ownable {
         uint256 extendedTime;
     }
 
-    mapping(address => mapping(uint256 => mapping(address => RequestRefund)))
-        public refundRequests;
+    mapping(address => mapping(uint256 => mapping(address => RequestRefund))) public refundRequests;
 
-    mapping(address => mapping(uint256 => mapping(address => RequestExtend)))
-        public extendRequests;
+    mapping(address => mapping(uint256 => mapping(address => RequestExtend))) public extendRequests;
     
-    mapping(address => mapping(uint256 => mapping(address => OfferData)))
-        public userOffers;
+    mapping(address => mapping(uint256 => mapping(address => OfferData))) public userOffers;
 
     constructor(address _wallet, uint256 _fee) {
+        require(_wallet != address(0), "ZERO_ADDRESS");
+
         wallet = _wallet;
         fee = _fee;
     }
@@ -151,25 +151,24 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
+        OfferData memory myData = userOffers[_token][tokenId][landlord];
         require(
                 LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
             );
-        require(userOffers[_token][tokenId][landlord].payToken != address(0), "offer is not exist");
-        require(_payToken == userOffers[_token][tokenId][landlord].payToken, "token is not valid");
+        require(myData.payToken != address(0), "offer is not exist");
+        require(_payToken == myData.payToken, "token is not valid");
 
         uint price;
         uint feeAmount;
 
-        if(rentTime > userOffers[_token][tokenId][landlord].startDiscountTime) {
-            price = userOffers[_token][tokenId][landlord].startDiscountTime * userOffers[_token][tokenId][landlord].price 
-            + (rentTime - userOffers[_token][tokenId][landlord].startDiscountTime) * userOffers[_token][tokenId][landlord].discountPrice;
-        }
-        else {
-            price = rentTime * userOffers[_token][tokenId][landlord].price;
+        if(rentTime > myData.startDiscountTime) {
+            price = myData.startDiscountTime * myData.price + (rentTime - myData.startDiscountTime) * myData.discountPrice;
+        } else {
+            price = rentTime * myData.price;
         }
         
-        require(rentTime >=  userOffers[_token][tokenId][landlord].minTime && rentTime <=  userOffers[_token][tokenId][landlord].maxTime, "invalid rent time");
+        require(rentTime >= myData.minTime && rentTime <=  myData.maxTime, "invalid rent time");
 
         feeAmount = price * fee / feeMutltipier;
 
@@ -277,12 +276,10 @@ contract NFTMarketplace is Ownable {
                     _payoutAmount
                 );
                 LockNFT(_token).transferFrom(renter, landlord, _tokenId);
-            }
-            else {
+            } else {
                 revert("landlord does not agree to the refund");
             }
-        }
-        else {
+        } else {
             if(refundRequests[_token][_tokenId][landlord].isRenterAgree == true) {
                 require(landlord == msg.sender, "caller should be a landlord");
 
@@ -292,8 +289,7 @@ contract NFTMarketplace is Ownable {
                     _payoutAmount
                 );
                 LockNFT(_token).transferFrom(renter, landlord, _tokenId);
-            }
-            else {
+            } else {
                 revert("renter does not agree to the refund");
             }
         }
@@ -357,6 +353,8 @@ contract NFTMarketplace is Ownable {
         returns(bool)
     {
         bool success;
+        bool isSupportedERC721 = IERC165(_contract).supportsInterface(INTERFACE_ID_ERC721);
+
         bytes memory data = abi.encodeWithSelector(FUNC_SELECTOR, 0);
         assembly {
             success := call(
@@ -369,7 +367,7 @@ contract NFTMarketplace is Ownable {
                 0         
             )
         }
-        return success;
+        return success && isSupportedERC721;
     }
 
     function checkLock(address _token, uint256 tokenId) 
