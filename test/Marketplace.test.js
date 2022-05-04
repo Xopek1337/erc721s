@@ -618,7 +618,7 @@ describe('Market for ERC721s NFT tests', () => {
       expect((await Market.extendRequests(args.token, args.tokenId, holder.address)).extendedTime).to.be.equal(_extendedTime);
 
       const holderBalance = await erc20.balanceOf(holder.address);
-      await Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, _payAmount, false);
+      await Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, _payAmount);
       
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const timestampBefore = (await ethers.provider.getBlock(blockNumBefore)).timestamp;
@@ -650,7 +650,7 @@ describe('Market for ERC721s NFT tests', () => {
   describe("acceptExtendRent tests", async function () {
     it("acceptExtendRent offer not exists negative", async function () {
       await expect(Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, 
-        0, false)).to.be.revertedWith('offer is not exist');
+        0)).to.be.revertedWith('offer is not exist');
     });
 
     it("acceptExtendRent offer not landlord negative", async function () {
@@ -663,7 +663,7 @@ describe('Market for ERC721s NFT tests', () => {
       await Market.connect(locker).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, _extendedTime);
 
       await expect(Market.connect(random).acceptExtendRent(args.token, holder.address, args.tokenId, 
-        0, false)).to.be.revertedWith('caller should be a landlord');
+        0)).to.be.revertedWith('caller should be a landlord');
     });
 
     it("acceptExtendRent invalid payamount negative", async function () {
@@ -676,7 +676,7 @@ describe('Market for ERC721s NFT tests', () => {
       await Market.connect(locker).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, _extendedTime);
 
       await expect(Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, 
-        0, false)).to.be.revertedWith('invalid payout amount');
+        0)).to.be.revertedWith('invalid payout amount');
     });
 
     it("acceptExtendRent renter is not agree negative", async function () {
@@ -684,7 +684,7 @@ describe('Market for ERC721s NFT tests', () => {
         args.startDiscountTime, args.price, args.discountPrice);
 
       await expect(Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, 
-        0, false)).to.be.revertedWith('renter does not agree to the extend rent');
+        0)).to.be.revertedWith('renter does not agree to the extend rent');
     });
   });
 

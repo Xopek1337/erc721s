@@ -11,12 +11,14 @@ contract NFTMarketplace is Ownable {
     bytes4 private constant FUNC_SELECTOR = bytes4(keccak256("getLocked(uint256)"));
     bytes4 private constant INTERFACE_ID_ERC721 = 0x80ac58cd;
 
-    address public wallet; 
-    uint256 public fee;
-    uint256 public feeMutltipier = 200;
-    uint256 public day = 1 days;
     bool public feePause = false;
+    address public wallet;
+    uint256 public fee;
+    uint256 public day = 1 days;
 
+    /// @dev multiplier for comission logic to divide the comission on two parts
+    uint256 public feeMutltipier = 200;
+    
     struct OfferData {
         uint256 minTime;
         uint256 maxTime;
@@ -53,6 +55,20 @@ contract NFTMarketplace is Ownable {
         wallet = _wallet;
         fee = _fee;
     }
+
+    /**
+     @notice Creates a new offer for a given item
+     @param _token NFT contract address
+     @param payToken Paying token
+     @param passToken Pass token
+     @param tokenId TokenId
+     @param minTime Min time for rent
+     @param minTime Max time for rent
+     @param startDiscountTime time in days from which discount starts
+     @param price Price for rent
+     @param discountPrice Discount price for rent
+     @return bool True if the function completed correctly
+     */
 
     function offer(
         address _token, 
@@ -92,6 +108,18 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
+    /**
+     @notice Creates a new offers for a few items
+     @param _token NFT contract address
+     @param payToken Paying token
+     @param passToken Pass token
+     @param tokenIds TokenIds
+     @param minTimes Min time for rent
+     @param minTimes Max time for rent
+     @param prices Prices for rent
+     @return bool True if the function completed correctly
+     */
+
     function offerAll(
         address _token,
         address payToken,
@@ -104,6 +132,11 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {   
+        require(
+                tokenIds.length == minTimes.length &&
+                minTimes.length == maxTimes.length &&
+                maxTimes.length == prices.length, "arrays must be the same length"
+            );
         require(
                 LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
                 "token not approved"
@@ -130,6 +163,15 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
+    /**
+     @notice Set discount price and time for offered items
+     @param _token NFT contract address
+     @param tokenIds TokenIds
+     @param startDiscountTimes Times in days from which discounts starts
+     @param discountPrices Discount prices for rent
+     @return bool True if the function completed correctly
+     */
+
     function setDiscountData(
         address _token, 
         uint256[] calldata tokenIds, 
@@ -139,6 +181,11 @@ contract NFTMarketplace is Ownable {
         public 
         returns(bool)
     {   
+        require(
+                tokenIds.length == startDiscountTimes.length &&
+                startDiscountTimes.length == discountPrices.length, "arrays must be the same length"
+            );
+
         for(uint i = 0; i < tokenIds.length; i++) {
             require(userOffers[_token][tokenIds[i]][msg.sender].payToken != address(0), "offer is not exist");
 
@@ -147,6 +194,16 @@ contract NFTMarketplace is Ownable {
         }
         return true;
     }
+
+    /**
+     @notice Rent offered item
+     @param _token NFT contract address
+     @param landlord Owner of offered token
+     @param _payToken Paying token
+     @param tokenId TokenId
+     @param rentTime Rent time
+     @return bool True if the function completed correctly
+     */
 
     function rent(
         address _token, 
@@ -209,6 +266,15 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
+    /**
+     @notice Back token if rent time is exceed
+     @dev Only landlord can call this function
+     @param _token NFT contract address
+     @param landlord Owner of offered token
+     @param _tokenId TokenId
+     @return bool True if the function completed correctly
+     */
+
     function backToken(address _token, address landlord, uint _tokenId)
         public
         returns(bool)
@@ -226,6 +292,15 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
+     /**
+     @notice Back token if rent time is exceed
+     @dev Only admin can call this function
+     @param _token NFT contract address
+     @param landlord Owner of offered token
+     @param _tokenId TokenId
+     @return bool True if the function completed correctly
+     */
+
     function backTokenAdmin(address _token, address landlord, uint _tokenId)
         public
         onlyOwner
@@ -242,6 +317,19 @@ contract NFTMarketplace is Ownable {
 
         return true;
     }
+
+     /**
+     @notice Early token refund request
+     @dev only renter or landlord can call this function
+     @dev if the caller is renter, he must set True to isRenter
+     @dev is the caller is landlord, he must set False to isRenter
+     @param _token NFT contract address
+     @param landlord Owner of offered token
+     @param _tokenId TokenId
+     @param _payoutAmount Compensation for early refund
+     @param isRenter Checks if the caller is renter
+     @return bool True if the function completed correctly
+     */
 
     function requestRefundToken(address _token, address landlord, uint _tokenId, uint _payoutAmount, bool isRenter) 
         public
@@ -269,6 +357,19 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
+     /**
+     @notice Accept early token refund
+     @dev only renter or landlord can call this function
+     @dev if the caller is renter, he must set True to isRenter
+     @dev is the caller is landlord, he must set False to isRenter
+     @param _token NFT contract address
+     @param landlord Owner of offered token
+     @param _tokenId TokenId
+     @param _payoutAmount Compensation for early refund
+     @param isRenter Checks if the caller is renter
+     @return bool True if the function completed correctly
+     */
+
     function acceptRefundToken(
         address _token, 
         address landlord, 
@@ -279,14 +380,16 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
+        RequestRefund memory request = refundRequests[_token][_tokenId][landlord];
+
         require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
-        require(_payoutAmount == refundRequests[_token][_tokenId][landlord].payoutAmount, "invalid payout amount");
+        require(_payoutAmount == request.payoutAmount, "invalid payout amount");
 
         address _payToken = userOffers[_token][_tokenId][landlord].payToken;
         address renter = LockNFT(_token).ownerOf(_tokenId);
 
         if(isRenter) {
-            if(refundRequests[_token][_tokenId][landlord].isLandlordAgree == true) {
+            if(request.isLandlordAgree == true) {
                 require(renter == msg.sender, "caller should be a renter");
 
                 IERC20(_payToken).transferFrom(
@@ -299,7 +402,7 @@ contract NFTMarketplace is Ownable {
                 revert("landlord does not agree to the refund");
             }
         } else {
-            if(refundRequests[_token][_tokenId][landlord].isRenterAgree == true) {
+            if(request.isRenterAgree == true) {
                 require(landlord == msg.sender, "caller should be a landlord");
 
                 IERC20(_payToken).transferFrom(
@@ -318,6 +421,17 @@ contract NFTMarketplace is Ownable {
 
         return true;
     }
+
+    /**
+     @notice Request for extend token rent
+     @dev only renter can call this function
+     @param _token NFT contract address
+     @param landlord Owner of offered token
+     @param _tokenId TokenId
+     @param _payoutAmount Pay amount for extend rent
+     @param _extendedTime Extended rent time
+     @return bool True if the function completed correctly
+     */
 
     function requestExtendRent(
         address _token, 
@@ -341,7 +455,17 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
-    function acceptExtendRent(address _token, address landlord, uint _tokenId, uint _payoutAmount, bool isRenter) 
+    /**
+     @notice Accept extend token rent
+     @dev only landlord can call this function
+     @param _token NFT contract address
+     @param landlord Owner of offered token
+     @param _tokenId TokenId
+     @param _payoutAmount Pay amount for extend rent
+     @return bool True if the function completed correctly
+     */
+
+    function acceptExtendRent(address _token, address landlord, uint _tokenId, uint _payoutAmount) 
         public
         returns(bool)
     {
@@ -369,6 +493,12 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
+    /**
+     @notice Checks if the conract matches ERC721s format 
+     @param _contract Contract address
+     @return bool True if the contract matches ERC721s format
+     */
+
     function isLockingContract(address _contract) 
         public
         returns(bool)
@@ -391,6 +521,13 @@ contract NFTMarketplace is Ownable {
         return success && isSupportedERC721;
     }
 
+    /**
+     @notice Checks if the token not locked
+     @param _token Contract address
+     @param tokenId TokenId
+     @return bool True if the token is not locked
+     */
+
     function checkLock(address _token, uint256 tokenId) 
         public
         returns(bool)
@@ -400,6 +537,13 @@ contract NFTMarketplace is Ownable {
 
         return locker == address(0) ? true : false;
     }
+
+    /**
+     @notice Set wallet for comission
+     @dev Only admin
+     @param _wallet Wallet address
+     @return bool True if the function completed correctly
+     */
 
     function setWallet(address _wallet)
         external
@@ -411,6 +555,13 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
+    /**
+     @notice Set comission for rent
+     @dev Only admin
+     @param _fee Size of comission in percent
+     @return bool True if the function completed correctly
+     */
+
     function setFee(uint256 _fee)
         external
         onlyOwner
@@ -420,6 +571,13 @@ contract NFTMarketplace is Ownable {
 
         return true;
     }
+
+    /**
+     @notice Stop payment of rental comission 
+     @dev Only admin
+     @param _pause Pause
+     @return bool True if the function completed correctly
+     */
 
     function setFeePause(bool _pause)
         external
