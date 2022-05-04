@@ -15,7 +15,7 @@ contract NFTMarketplace is Ownable {
     uint256 public fee;
     uint256 public feeMutltipier = 200;
     uint256 public day = 1 days;
-    bool public pauseFee = false;
+    bool public feePause = false;
 
     struct OfferData {
         uint256 minTime;
@@ -180,7 +180,7 @@ contract NFTMarketplace is Ownable {
 
         if(myData.passToken != address(0)) {
             require(IERC721(myData.passToken).balanceOf(msg.sender) > 0, "renter does not have pass token");
-            if(!pauseFee) {
+            if(!feePause) {
                 IERC20(_payToken).transferFrom(
                     msg.sender,
                     wallet,
@@ -417,12 +417,12 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
-    function setPauseFee(bool _pause)
+    function setFeePause(bool _pause)
         external
         onlyOwner
         returns (bool) 
     {
-        pauseFee = _pause;
+        feePause = _pause;
 
         return true;
     }
