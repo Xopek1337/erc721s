@@ -9,7 +9,7 @@ async function main() {
   try {
     await hre.run("verify:verify", {
       address: data.NFTMarketplace,
-      constructorArguments: [process.env.WALLET, "5"],
+      constructorArguments: [process.env.WALLET, process.env.FEE],
       contract: "contracts/Marketplace.sol:NFTMarketplace",
     });
   } catch (e) {
