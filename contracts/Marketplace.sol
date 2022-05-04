@@ -573,7 +573,7 @@ contract NFTMarketplace is Ownable {
     }
 
     /**
-     @notice Stop payment of rental comission 
+     @notice Stop payment of rental comission for pass holders
      @dev Only admin
      @param _pause Pause
      @return bool True if the function completed correctly
