@@ -15,7 +15,7 @@ contract NFTMarketplace is Ownable {
     uint256 public fee;
     uint256 public feeMutltipier = 200;
     uint256 public day = 1 days;
-    bool pauseFee = false;
+    bool public pauseFee = false;
 
     struct OfferData {
         uint256 minTime;
