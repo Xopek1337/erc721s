@@ -178,7 +178,7 @@ contract NFTMarketplace is Ownable {
         feeAmount = price * fee / feeMutltipier;
 
         if(myData.passToken != address(0)) {
-            require(IERC721(myData.passToken).balanceOf(msg.sender) > 0, "");
+            require(IERC721(myData.passToken).balanceOf(msg.sender) > 0, "renter does not have pass token");
         } else {
             IERC20(_payToken).transferFrom(
                 msg.sender,
