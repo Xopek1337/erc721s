@@ -5,6 +5,7 @@ import "./LockNFT.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract NFTMarketplace is Ownable {
     bytes4 private constant FUNC_SELECTOR = bytes4(keccak256("getLocked(uint256)"));
@@ -23,6 +24,7 @@ contract NFTMarketplace is Ownable {
         uint256 discountPrice;
         uint256 endTime;
         address payToken;
+        address passToken;
     }
 
     struct RequestRefund {
@@ -54,6 +56,7 @@ contract NFTMarketplace is Ownable {
     function offer(
         address _token, 
         address payToken,
+        address passToken,
         uint256 tokenId, 
         uint256 minTime, 
         uint256 maxTime, 
@@ -81,7 +84,8 @@ contract NFTMarketplace is Ownable {
             price: (price + price * fee / feeMutltipier), 
             discountPrice: (discountPrice + discountPrice * fee / feeMutltipier), 
             endTime: 0, 
-            payToken: payToken}
+            payToken: payToken,
+            passToken: passToken}
         ));
 
         return true;
@@ -89,7 +93,8 @@ contract NFTMarketplace is Ownable {
 
     function offerAll(
         address _token,
-        address payToken, 
+        address payToken,
+        address passToken,
         uint256[] calldata tokenIds, 
         uint256[] calldata minTimes, 
         uint256[] calldata maxTimes, 
@@ -117,7 +122,8 @@ contract NFTMarketplace is Ownable {
                 price: (prices[i] + prices[i] * fee / feeMutltipier), 
                 discountPrice: (prices[i] + prices[i] * fee / feeMutltipier), 
                 endTime: 0, 
-                payToken: payToken}
+                payToken: payToken,
+                passToken: passToken}
             ));
         }
         return true;
@@ -158,6 +164,7 @@ contract NFTMarketplace is Ownable {
             );
         require(myData.payToken != address(0), "offer is not exist");
         require(_payToken == myData.payToken, "token is not valid");
+        require(rentTime >= myData.minTime && rentTime <=  myData.maxTime, "invalid rent time");
 
         uint price;
         uint feeAmount;
@@ -168,20 +175,22 @@ contract NFTMarketplace is Ownable {
             price = rentTime * myData.price;
         }
         
-        require(rentTime >= myData.minTime && rentTime <=  myData.maxTime, "invalid rent time");
-
         feeAmount = price * fee / feeMutltipier;
 
-        IERC20(_payToken).transferFrom(
-            msg.sender,
-            wallet,
-            feeAmount
-        );
+        if(myData.passToken != address(0)) {
+            require(IERC721(myData.passToken).balanceOf(msg.sender) > 0, "");
+        } else {
+            IERC20(_payToken).transferFrom(
+                msg.sender,
+                wallet,
+                feeAmount
+            );
+        }
 
         IERC20(_payToken).transferFrom(
             msg.sender,
             landlord,
-            price
+            price - feeAmount
         );
 
         LockNFT(_token).transferFrom(address(this), msg.sender, tokenId);

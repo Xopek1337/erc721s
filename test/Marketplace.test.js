@@ -89,7 +89,7 @@ describe('Market for ERC721s NFT tests', () => {
   //functional tests
   describe('Offer functional tests', async function () {
     it('Offer creates correctly', async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
@@ -102,29 +102,29 @@ describe('Market for ERC721s NFT tests', () => {
     it('Offer for non approved token negative', async function () {
       await LockNFT.connect(holder).setApprovalForAll(Market.address, false);
       
-      await expect(Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await expect(Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith('token not approved');
     });
 
     it('Offer is not created twice negative', async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);      
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
       
       //same offer second time
-      await expect(Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await expect(Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith('offer already created');
     });
 
     it('Offer with zero address paytoken reverts negative', async function () {
-      await expect(Market.connect(holder).offer(args.token, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
+      await expect(Market.connect(holder).offer(args.token, ZERO_ADDRESS, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith("ZERO_ADDRESS");
     });
 
     it('Offer locked token reverts negative', async function () {
       await LockNFT.connect(holder).lock(await unlocker.getAddress(), args.tokenId);
 
-      await expect(Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await expect(Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice)).to.be.revertedWith('token is locked');
     });
   });
@@ -136,7 +136,7 @@ describe('Market for ERC721s NFT tests', () => {
       args.tokenId = testedTokenId;
       await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-      await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+      await Market.connect(holder).offerAll(args.token, args.paytoken, ZERO_ADDRESS, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
         [args.maxTime, args.maxTime], [args.price, args.price]);
       
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
@@ -146,27 +146,27 @@ describe('Market for ERC721s NFT tests', () => {
     it('OfferAll for non approved token negative', async function () {
       await LockNFT.connect(holder).setApprovalForAll(Market.address, false);
       
-      await expect(Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+      await expect(Market.connect(holder).offerAll(args.token, args.paytoken, ZERO_ADDRESS, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
         [args.maxTime, args.maxTime], [args.price, args.price])).to.be.revertedWith('token not approved');
     });
     //NOTE: if cycle drops on last element, all previous are created and written to offerAll
     it('OfferAll already offered token negative', async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
-      await expect(Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId-1, args.tokenId], [args.minTime, args.minTime], 
+      await expect(Market.connect(holder).offerAll(args.token, args.paytoken, ZERO_ADDRESS, [args.tokenId-1, args.tokenId], [args.minTime, args.minTime], 
         [args.maxTime, args.maxTime], [args.price, args.price])).to.be.revertedWith('offer already created');
     });
 
     it('OfferAll for locked token token negative', async function () {
       await LockNFT.connect(holder).lock(unlocker.address, args.tokenId);
       
-      await expect(Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+      await expect(Market.connect(holder).offerAll(args.token, args.paytoken, ZERO_ADDRESS, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
         [args.maxTime, args.maxTime], [args.price, args.price])).to.be.revertedWith('token is locked');
     });
 
     it('OfferAll with zero address paytoken reverts negative', async function () {
-      await expect(Market.connect(holder).offerAll(args.token, ZERO_ADDRESS, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+      await expect(Market.connect(holder).offerAll(args.token, ZERO_ADDRESS, ZERO_ADDRESS, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
         [args.maxTime, args.maxTime], [args.price, args.price])).to.be.revertedWith("ZERO_ADDRESS");
     });
 
@@ -176,7 +176,7 @@ describe('Market for ERC721s NFT tests', () => {
       args.tokenId = testedTokenId;
       await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
 
-      await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1, args.tokenId-2], [args.minTime], 
+      await Market.connect(holder).offerAll(args.token, args.paytoken, ZERO_ADDRESS, [args.tokenId, args.tokenId-1, args.tokenId-2], [args.minTime], 
         [args.maxTime], [args.price]);
       
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(args.paytoken);
@@ -186,7 +186,7 @@ describe('Market for ERC721s NFT tests', () => {
 
   describe('SetDiscountData functional tests', async function () {
     it('Holder can set discount for their offer', async function () {
-      await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+      await Market.connect(holder).offerAll(args.token, args.paytoken, ZERO_ADDRESS, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
         [args.maxTime, args.maxTime], [args.price, args.price]);
 
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).discountPrice).to.be.equal(
@@ -201,7 +201,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
 
     it('Random can not set discount for holder offer negative', async function () {
-      await Market.connect(holder).offerAll(args.token, args.paytoken, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
+      await Market.connect(holder).offerAll(args.token, args.paytoken, ZERO_ADDRESS, [args.tokenId, args.tokenId-1], [args.minTime, args.minTime], 
         [args.maxTime, args.maxTime], [args.price, args.price]);
 
       await expect(Market.connect(random).setDiscountData(args.token, [args.tokenId, args.tokenId-1], [args.startDiscountTime, 
@@ -212,22 +212,27 @@ describe('Market for ERC721s NFT tests', () => {
   describe('Rent functional tests', async function () {
     it('Standart rent workflow rentTime<startDiscountTime', async function () {
       const rentTime = 500;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
       expect(await LockNFT.isApprovedForAll(locker.address, Market.address)).to.be.equal(true);
 
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
+
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const timestampBefore = (await ethers.provider.getBlock(blockNumBefore)).timestamp;
+      const PriceWithFee = (await Market.userOffers(args.token, args.tokenId, holder.address)).price;
+      const holderProfit = PriceWithFee * rentTime;
+      const holderProfitWithoutAmount = holderProfit - holderProfit * fee / feeMutltipier;
+
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).endTime).to.be.equal(rentTime*day+timestampBefore);
-      expect((await Market.userOffers(args.token, args.tokenId, holder.address)).price * rentTime).to.be.equal(
+      expect(holderProfitWithoutAmount).to.be.equal(
         await erc20.balanceOf(holder.address)-10000000);
     });
 
     it('Standart rent workflow rentTime>startDiscountTime', async function () {
       const rentTime = 600;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
@@ -236,15 +241,18 @@ describe('Market for ERC721s NFT tests', () => {
       const timestampBefore = (await ethers.provider.getBlock(blockNumBefore)).timestamp;
       const PriceWithFee = (await Market.userOffers(args.token, args.tokenId, holder.address)).price;
       const discountPriceWithFee = (await Market.userOffers(args.token, args.tokenId, holder.address)).discountPrice;
+      const holderProfit = (PriceWithFee * (args.startDiscountTime) + (rentTime - args.startDiscountTime) * discountPriceWithFee);
+      const holderProfitWithoutAmount = holderProfit - holderProfit * fee / feeMutltipier;
+
 
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).endTime).to.be.equal(rentTime*day+timestampBefore);      
-      expect(PriceWithFee * (args.startDiscountTime) + (rentTime - args.startDiscountTime) * discountPriceWithFee).to.be.equal(
+      expect(holderProfitWithoutAmount).to.be.equal(
         await erc20.balanceOf(holder.address)-10000000);
     });
 
     it('rent if renter didnt approved market negative', async function () {
       const rentTime = 600;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
       await LockNFT.connect(locker).setApprovalForAll(Market.address, false);
@@ -262,7 +270,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it('rent with wrong payToken negative', async function () {
       const rentTime = 600;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
             
       await expect(Market.connect(locker).rent(args.token, holder.address, ZERO_ADDRESS, 
@@ -271,7 +279,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it('rent with wrong rentTime negative', async function () {
       const rentTime = 1111;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
             
       await expect(Market.connect(locker).rent(args.token, holder.address, args.paytoken, 
@@ -283,7 +291,7 @@ describe('Market for ERC721s NFT tests', () => {
     it("backToken functional default", async function () {
       //offer-rent logic
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
@@ -314,7 +322,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
 
     it("backToken not landlord negative", async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
       await expect(Market.connect(random).backToken(args.token, holder.address, 
@@ -323,7 +331,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("backToken offer endTime not expired negative", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
@@ -339,7 +347,7 @@ describe('Market for ERC721s NFT tests', () => {
     it("backTokenAdmin functional default", async function () {
       //offer-rent logic
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
@@ -372,7 +380,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
 
     it("backTokenAdmin not admin negative", async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
       await expect(Market.connect(random).backTokenAdmin(args.token, holder.address, 
@@ -381,7 +389,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("backTokenAdmin offer endTime not expired negative", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
@@ -395,7 +403,7 @@ describe('Market for ERC721s NFT tests', () => {
     it("request+accept invoked by renter scen default", async function () {
       //offer-rent logic
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
@@ -429,7 +437,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("request+accept invoked by landlord scen default", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
       
@@ -446,7 +454,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
 
     it("requestRefund by landlord", async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
       const payAmount = 1000;
@@ -463,7 +471,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
 
     it("requestRefund by random negative", async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       const payAmount = 1000;
@@ -473,7 +481,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("requestRefund by not landlord negative", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
 
@@ -485,7 +493,7 @@ describe('Market for ERC721s NFT tests', () => {
     it("requestRefund by landlord zero approved balance negative", async function () {
       const rentTime = 1;
       await erc20.connect(holder).approve(Market.address, 0);
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
 
@@ -504,7 +512,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("acceptRefund payamount invalid negative", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
 
@@ -518,7 +526,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("acceptRefund by random (request by locker) negative", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
 
@@ -532,7 +540,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("acceptRefund by random (request by landlord) negative", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
 
@@ -547,7 +555,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("acceptRefund landlord is not agree negative", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
 
@@ -560,7 +568,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
 
     it("acceptRefund renter is not agree negative", async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       const payAmount = 1000;
@@ -575,7 +583,7 @@ describe('Market for ERC721s NFT tests', () => {
   describe("ExtendRent tests", async function () {
     it("request functional default", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
@@ -594,7 +602,7 @@ describe('Market for ERC721s NFT tests', () => {
     it("request-accept scen default", async function () {
       //offer-rent logic
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       expect(await Market.userOffers(args.token, args.tokenId, holder.address).payToken).not.to.be.equal(ZERO_ADDRESS);
@@ -630,7 +638,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
 
     it("requestExtendRent offer not exists negative", async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       const _payAmount = 1000;
       const _extendedTime = 100;
@@ -647,7 +655,7 @@ describe('Market for ERC721s NFT tests', () => {
 
     it("acceptExtendRent offer not landlord negative", async function () {
       const rentTime = 1;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       const _payAmount = 1000;
       const _extendedTime = 100;
@@ -662,7 +670,7 @@ describe('Market for ERC721s NFT tests', () => {
       const rentTime = 1;
       const _payAmount = 1000;
       const _extendedTime = 100;
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
       await Market.connect(locker).requestExtendRent(args.token, holder.address, args.tokenId, _payAmount, _extendedTime);
@@ -672,7 +680,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
 
     it("acceptExtendRent renter is not agree negative", async function () {
-      await Market.connect(holder).offer(args.token, args.paytoken, args.tokenId, args.minTime, args.maxTime, 
+      await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
 
       await expect(Market.connect(holder).acceptExtendRent(args.token, holder.address, args.tokenId, 
