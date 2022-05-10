@@ -62,14 +62,14 @@ contract NFTMarketplace is Ownable {
         uint256 discountPrice
     );
     event DiscountCreated(
-        address indexed creator,
+        address indexed holder,
         address indexed nft, 
         uint256 tokenId, 
         uint256 startDiscountTime, 
         uint256 discountPrice
     );
     event RentCreated(
-        address indexed creator,
+        address indexed renter,
         address indexed nft, 
         address indexed landlord, 
         address indexed _payToken, 
