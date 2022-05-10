@@ -49,6 +49,72 @@ contract NFTMarketplace is Ownable {
     
     mapping(address => mapping(uint256 => mapping(address => OfferData))) public userOffers;
 
+    event Offer(OfferData userOffer);
+
+    event DiscountData(
+        address indexed _token, 
+        uint256[] tokenIds, 
+        uint256[] startDiscountTimes, 
+        uint256[] discountPrices
+    );
+
+    event Rent(
+        address indexed _token, 
+        address indexed landlord, 
+        address indexed _payToken, 
+        uint256 indexed tokenId, 
+        uint256 indexed rentTime
+    );
+
+    event BackToken(
+        address indexed _token, 
+        address indexed landlord, 
+        uint256 _tokenId
+    );
+
+    event RequestRefundToken(
+        address indexed _token, 
+        address indexed landlord, 
+        uint256 _tokenId, 
+        uint256 _payoutAmount, 
+        bool isRenter
+    );
+
+    event AcceptRefundToken(
+        address indexed _token, 
+        address indexed landlord, 
+        uint256 _tokenId, 
+        uint256 _payoutAmount, 
+        bool isRenter
+    );
+
+    event RequestExtendRent(
+        address indexed _token, 
+        address indexed landlord, 
+        uint256 _tokenId, 
+        uint256 _payoutAmount, 
+        uint256 _extendedTime
+    );
+
+    event AcceptExtendRent(
+        address indexed _token, 
+        address indexed landlord, 
+        uint256 _tokenId, 
+        uint256 _payoutAmount
+    );
+
+    event IsLockingContract(
+        address indexed _contract
+    );
+
+    event CheckLock(address indexed _token, uint256 tokenId);
+
+    event NewWallet(address indexed _wallet);
+
+    event NewFee(uint256 _fee);
+
+    event FeePause(bool _pause);
+
     constructor(address _wallet, uint256 _fee) {
         require(_wallet != address(0), "ZERO_ADDRESS");
 
@@ -105,6 +171,8 @@ contract NFTMarketplace is Ownable {
             passToken: passToken}
         ));
 
+        emit Offer(userOffers[_token][tokenId][msg.sender]);
+
         return true;
     }
 
@@ -159,6 +227,8 @@ contract NFTMarketplace is Ownable {
                 payToken: payToken,
                 passToken: passToken}
             ));
+
+            emit Offer(userOffers[_token][tokenId][msg.sender]);
         }
         return true;
     }
@@ -191,6 +261,13 @@ contract NFTMarketplace is Ownable {
 
             userOffers[_token][tokenIds[i]][msg.sender].discountPrice = discountPrices[i] + discountPrices[i] * fee / feeMutltipier;
             userOffers[_token][tokenIds[i]][msg.sender].startDiscountTime = startDiscountTimes[i];
+
+            emit DiscountData(
+                _token,
+                tokenIds,
+                startDiscountTimes,
+                discountPrices
+            );
         }
         return true;
     }
@@ -257,6 +334,14 @@ contract NFTMarketplace is Ownable {
 
         userOffers[_token][tokenId][landlord].endTime = rentTime * day + block.timestamp;
 
+        emit Rent(
+            _token, 
+            landlord, 
+            _payToken, 
+            tokenId, 
+            rentTime
+        );
+
         return true;
     }
 
@@ -283,6 +368,8 @@ contract NFTMarketplace is Ownable {
 
         delete (userOffers[_token][_tokenId][landlord]);
 
+        emit BackToken(_token, landlord, _tokenId);
+
         return true;
     }
 
@@ -308,6 +395,8 @@ contract NFTMarketplace is Ownable {
         LockNFT(_token).transferFrom(renter, landlord, _tokenId);
 
         delete (userOffers[_token][_tokenId][landlord]);
+
+        emit BackToken(_token, landlord, _tokenId);
 
         return true;
     }
@@ -346,6 +435,8 @@ contract NFTMarketplace is Ownable {
             request.isLandlordAgree = true;
             request.payoutAmount = _payoutAmount;
         }
+
+        emit RequestRefundToken(_token, landlord, _tokenId, _payoutAmount, isRenter);
 
         return true;
     }
@@ -412,6 +503,8 @@ contract NFTMarketplace is Ownable {
         delete (refundRequests[_token][_tokenId][landlord]);
         delete (userOffers[_token][_tokenId][landlord]);
 
+        emit AcceptRefundToken(_token, landlord, _tokenId, _payoutAmount, isRenter);
+
         return true;
     }
 
@@ -444,6 +537,8 @@ contract NFTMarketplace is Ownable {
         request.isRenterAgree = true;
         request.payoutAmount = _payoutAmount;
         request.extendedTime = _extendedTime;
+
+        emit RequestExtendRent(_token, landlord, _tokenId, _payoutAmount, _extendedTime);
 
         return true;
     }
@@ -482,6 +577,9 @@ contract NFTMarketplace is Ownable {
         }
 
         delete (extendRequests[_token][_tokenId][landlord]);
+
+        emit AcceptExtendRent(_token, landlord, _tokenId, _payoutAmount);
+
         return true;
     }
 
@@ -510,6 +608,9 @@ contract NFTMarketplace is Ownable {
                 0         
             )
         }
+
+        emit IsLockingContract(_contract);
+
         return success && isSupportedERC721;
     }
 
@@ -526,6 +627,8 @@ contract NFTMarketplace is Ownable {
     {
         require(isLockingContract(_token), "contract does not support locking");
         address locker = ERC721s(_token).getLocked(tokenId);
+
+        emit CheckLock(_token, tokenId);
 
         return locker == address(0) ? true : false;
     }
@@ -544,6 +647,8 @@ contract NFTMarketplace is Ownable {
     {
         wallet = _wallet;
 
+        emit NewWallet(_wallet);
+
         return true;
     }
 
@@ -561,6 +666,8 @@ contract NFTMarketplace is Ownable {
     {
         fee = _fee;
 
+        emit NewFee(_fee);
+
         return true;
     }
 
@@ -577,6 +684,8 @@ contract NFTMarketplace is Ownable {
         returns (bool) 
     {
         feePause = _pause;
+
+        emit FeePause(_pause);
 
         return true;
     }
