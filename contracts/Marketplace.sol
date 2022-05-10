@@ -339,8 +339,7 @@ contract NFTMarketplace is Ownable {
             
             request.isRenterAgree = true;
             request.payoutAmount = _payoutAmount;
-        }
-        else {
+        } else {
             require(msg.sender == landlord, "caller should be a landlord");
             require(IERC20(_payToken).allowance(landlord, address(this)) >= _payoutAmount, "pay tokens is not approved");
 
@@ -478,8 +477,7 @@ contract NFTMarketplace is Ownable {
                 _payoutAmount
             );
             userOffers[_token][_tokenId][landlord].endTime += _extendedTime * day;
-        }
-        else {
+        } else {
             revert("renter does not agree to the extend rent");
         }
 
