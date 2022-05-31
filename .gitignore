@@ -9,6 +9,7 @@ networks
 yarn.lock
 coverage
 coverage.json
+erc721s.code-workspace
 
 #Hardhat files
 cache
