@@ -42,9 +42,9 @@ async function main() {
           { name: 'deadline', type: 'uint256' }
       ]
     },
-    primaryType: "PermitAll",
+    primaryType: "transferFrom",
     domain: {
-      name: "MockNFT",
+      name: process.env.CONTRACT_NAME,
       version: '1',
       chainId: 4,
       verifyingContract: process.env.VERIFYING_CONTRACT

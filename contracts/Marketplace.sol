@@ -92,8 +92,6 @@ contract NFTMarketplace is Ownable {
         require(checkLock(_token, tokenId), "token is locked");
         require(userOffers[_token][tokenId][msg.sender].payToken == address(0), "offer already created");
 
-        LockNFT(_token).transferFrom(msg.sender, address(this), tokenId);
-
         userOffers[_token][tokenId][msg.sender] = (OfferData(
             {minTime: minTime, 
             maxTime: maxTime, 
@@ -146,8 +144,6 @@ contract NFTMarketplace is Ownable {
         for(uint i = 0; i < tokenIds.length; i++) {
             require(userOffers[_token][tokenIds[i]][msg.sender].payToken == address(0), "offer already created");
             require(checkLock(_token, tokenIds[i]), "token is locked");
-
-            LockNFT(_token).transferFrom(msg.sender, address(this), tokenIds[i]);
 
             userOffers[_token][tokenIds[i]][msg.sender] = (OfferData(
                 {minTime: minTimes[i], 
@@ -258,7 +254,7 @@ contract NFTMarketplace is Ownable {
             price - feeAmount
         );
 
-        LockNFT(_token).transferFrom(address(this), msg.sender, tokenId);
+        LockNFT(_token).transferFrom(landlord, msg.sender, tokenId);
         LockNFT(_token).lock(address(this), tokenId);
 
         userOffers[_token][tokenId][landlord].endTime = rentTime * day + block.timestamp;
@@ -345,8 +341,7 @@ contract NFTMarketplace is Ownable {
             
             request.isRenterAgree = true;
             request.payoutAmount = _payoutAmount;
-        }
-        else {
+        } else {
             require(msg.sender == landlord, "caller should be a landlord");
             require(IERC20(_payToken).allowance(landlord, address(this)) >= _payoutAmount, "pay tokens is not approved");
 
@@ -484,8 +479,7 @@ contract NFTMarketplace is Ownable {
                 _payoutAmount
             );
             userOffers[_token][_tokenId][landlord].endTime += _extendedTime * day;
-        }
-        else {
+        } else {
             revert("renter does not agree to the extend rent");
         }
 
