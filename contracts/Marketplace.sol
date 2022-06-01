@@ -51,9 +51,9 @@ contract NFTMarketplace is Ownable {
 
     event OfferCreated(
         address indexed creator,
-        address indexed nft,
-        address indexed payToken,
-        address indexed passToken,
+        address indexed _token,
+        address payToken,
+        address passToken,
         uint256 tokenId,
         uint256 minTime, 
         uint256 maxTime, 
@@ -63,16 +63,16 @@ contract NFTMarketplace is Ownable {
     );
     event DiscountCreated(
         address indexed holder,
-        address indexed nft, 
+        address indexed _token, 
         uint256 tokenId, 
         uint256 startDiscountTime, 
         uint256 discountPrice
     );
     event RentCreated(
         address indexed renter,
-        address indexed nft, 
-        address indexed landlord, 
-        address indexed _payToken, 
+        address indexed _token, 
+        address landlord, 
+        address _payToken, 
         uint256 tokenId, 
         uint256 rentTime
     );
@@ -415,7 +415,7 @@ contract NFTMarketplace is Ownable {
 
         delete (userOffers[_token][_tokenId][landlord]);
 
-        emit BackToken(_token, landlord, _tokenId);
+        emit BackedToken(_token, landlord, _tokenId);
 
         return true;
     }
