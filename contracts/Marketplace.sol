@@ -61,13 +61,7 @@ contract NFTMarketplace is Ownable {
         uint256 price, 
         uint256 discountPrice
     );
-    event DiscountCreated(
-        address indexed holder,
-        address indexed _token, 
-        uint256 tokenId, 
-        uint256 startDiscountTime, 
-        uint256 discountPrice
-    );
+
     event RentCreated(
         address indexed renter,
         address indexed _token, 
@@ -182,73 +176,7 @@ contract NFTMarketplace is Ownable {
         return true;
     }
 
-    /**
-     @notice Creates a new offers for a few items
-     @param _token NFT contract address
-     @param payToken Paying token
-     @param passToken Pass token
-     @param tokenIds TokenIds
-     @param minTimes Min time for rent
-     @param maxTimes Max time for rent
-     @param prices Prices for rent
-     @return bool True if the function completed correctly
-     */
-
-    function offerAll(
-        address _token,
-        address payToken,
-        address passToken,
-        uint256[] calldata tokenIds, 
-        uint256[] calldata minTimes, 
-        uint256[] calldata maxTimes, 
-        uint256[] calldata prices
-    )
-        public
-        returns(bool)
-    {   
-        require(
-                tokenIds.length == minTimes.length &&
-                minTimes.length == maxTimes.length &&
-                maxTimes.length == prices.length, "arrays must be the same length"
-            );
-        require(
-                LockNFT(_token).isApprovedForAll(msg.sender, address(this)),
-                "token not approved"
-            );
-        require(payToken != address(0), "ZERO_ADDRESS");
-
-        for(uint i = 0; i < tokenIds.length; i++) {
-            require(userOffers[_token][tokenIds[i]][msg.sender].payToken == address(0), "offer already created");
-            require(checkLock(_token, tokenIds[i]), "token is locked");
-
-            userOffers[_token][tokenIds[i]][msg.sender] = (OfferData(
-                {minTime: minTimes[i], 
-                maxTime: maxTimes[i], 
-                startDiscountTime: 0, 
-                price: (prices[i] + prices[i] * fee / feeMutltipier), 
-                discountPrice: (prices[i] + prices[i] * fee / feeMutltipier), 
-                endTime: 0, 
-                payToken: payToken,
-                passToken: passToken}
-            ));
-
-            emit OfferCreated(
-                msg.sender,
-                _token, 
-                payToken,
-                passToken,
-                tokenIds[i], 
-                minTimes[i], 
-                maxTimes[i], 
-                0, 
-                prices[i], 
-                0
-            );
-        }
-
-        return true;
-    }
-
+    
     /**
      @notice Set discount price and time for offered items
      @param _token NFT contract address
@@ -278,13 +206,7 @@ contract NFTMarketplace is Ownable {
             userOffers[_token][tokenIds[i]][msg.sender].discountPrice = discountPrices[i] + discountPrices[i] * fee / feeMutltipier;
             userOffers[_token][tokenIds[i]][msg.sender].startDiscountTime = startDiscountTimes[i];
 
-            emit DiscountCreated(
-                msg.sender,
-                _token,
-                tokenIds[i],
-                startDiscountTimes[i],
-                discountPrices[i]
-            );
+
         }
 
         return true;
