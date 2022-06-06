@@ -379,7 +379,7 @@ describe('Market for ERC721s NFT tests', () => {
         args.startDiscountTime, args.price, args.discountPrice);
       
       await expect(Market.connect(random).backToken(args.token, holder.address, 
-        args.tokenId)).to.be.revertedWith('only landlord can call back token');
+        args.tokenId)).to.be.revertedWith('only landlord or admin can call back token');
     });
 
     it("backToken offer endTime not expired negative", async function () {
@@ -418,17 +418,15 @@ describe('Market for ERC721s NFT tests', () => {
       const timestampNow = (await ethers.provider.getBlock(blockNumNow)).timestamp;
 
       expect(Math.trunc((timestampNow - timestampBefore)/10)).to.be.equal(Math.trunc(rentTime*day/10));
-      
-      await expect(Market.connect(holder).backTokenAdmin(args.token, holder.address, args.tokenId)).to.be.revertedWith(
-        "Ownable: caller is not the owner");
-      await Market.connect(deployer).backTokenAdmin(args.token, holder.address, args.tokenId);
+
+      await Market.connect(deployer).backToken(args.token, holder.address, args.tokenId);
 
       expect(await LockNFT.ownerOf(args.tokenId)).to.be.equal(holder.address);
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).payToken).to.be.equal(ZERO_ADDRESS);
     });
 
     it("backTokenAdmin non-existent offer negative", async function () {
-      await expect(Market.connect(deployer).backTokenAdmin(args.token, holder.address, 
+      await expect(Market.connect(deployer).backToken(args.token, holder.address, 
         args.tokenId)).to.be.revertedWith('offer is not exist');
     });
 
@@ -436,8 +434,8 @@ describe('Market for ERC721s NFT tests', () => {
       await Market.connect(holder).offer(args.token, args.paytoken, ZERO_ADDRESS, args.tokenId, args.minTime, args.maxTime, 
         args.startDiscountTime, args.price, args.discountPrice);
       
-      await expect(Market.connect(random).backTokenAdmin(args.token, holder.address, 
-        args.tokenId)).to.be.revertedWith('Ownable: caller is not the owner');
+      await expect(Market.connect(random).backToken(args.token, holder.address, 
+        args.tokenId)).to.be.revertedWith('only landlord or admin can call back token');
     });
 
     it("backTokenAdmin offer endTime not expired negative", async function () {
@@ -447,7 +445,7 @@ describe('Market for ERC721s NFT tests', () => {
       
       await Market.connect(locker).rent(args.token, holder.address, args.paytoken, args.tokenId, rentTime);
       
-      await expect(Market.connect(deployer).backTokenAdmin(args.token, holder.address, 
+      await expect(Market.connect(deployer).backToken(args.token, holder.address, 
         args.tokenId)).to.be.revertedWith('rent time is not expired');
     });
   });
@@ -529,7 +527,7 @@ describe('Market for ERC721s NFT tests', () => {
 
       const payAmount = 1000;
       await expect(Market.connect(random).requestRefundToken(args.token, holder.address, args.tokenId, 
-        payAmount, true)).to.be.revertedWith('caller should be arenter');
+        payAmount, true)).to.be.revertedWith('caller should be a renter');
     });
 
     it("requestRefund by not landlord negative", async function () {
