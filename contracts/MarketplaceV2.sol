@@ -54,15 +54,6 @@ contract NFTMarketplaceV2 is Ownable {
 
     mapping(address => uint256) public nonces;
 
-
-    event OfferCreated(
-        address creator,
-        address nft,
-        address payToken,
-        address passToken,
-        uint256 tokenId
-    );
-
     event RentCreated(
         address renter,
         address nft, 
@@ -72,11 +63,13 @@ contract NFTMarketplaceV2 is Ownable {
         uint256 rentTime,
         uint256 price
     );
+
     event BackedToken(
         address _token, 
         address landlord, 
         uint256 _tokenId
     );
+
     event RequestedExtendRent(
         address _token, 
         address landlord, 
@@ -84,14 +77,18 @@ contract NFTMarketplaceV2 is Ownable {
         uint256 _payoutAmount, 
         uint256 _extendedTime
     );
+
     event AcceptedExtendRent(
         address _token, 
         address landlord, 
         uint256 _tokenId, 
         uint256 _payoutAmount
     );
+
     event UpdateWallet(address indexed _wallet);
+
     event UpdateFee(uint256 _fee);
+    
     event UpdateFeePause(bool _pause);
 
     constructor(address _wallet, uint256 _fee) {
