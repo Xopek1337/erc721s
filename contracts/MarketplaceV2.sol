@@ -13,7 +13,7 @@ contract NFTMarketplaceV2 is Ownable {
     bytes4 private constant INTERFACE_ID_ERC721 = 0x80ac58cd;
 
     bytes32 public constant RENT_TYPEHASH =
-        keccak256("Rent(address _token, address _payToken, uint256 tokenId, uint256 rentTime, uint256 price, uint256 nonce, uint256 deadline)");
+        keccak256("Rent(address _token,address _payToken,uint256 tokenId,uint256 rentTime,uint256 price,uint256 nonce,uint256 deadline)");
 
     uint256 internal immutable INITIAL_CHAIN_ID;
 
@@ -53,6 +53,8 @@ contract NFTMarketplaceV2 is Ownable {
     mapping(address => mapping(uint256 => mapping(address => OfferData))) public userOffers;
 
     mapping(address => uint256) public nonces;
+
+    mapping(uint256 => uint256) public lockingNonces;
 
     event RentCreated(
         address renter,
@@ -109,7 +111,7 @@ contract NFTMarketplaceV2 is Ownable {
      @return bool True if the function completed correctly
      */
 
-    function rent(
+     function rent(
         address _token, 
         address _payToken, 
         uint256 tokenId, 
@@ -144,12 +146,12 @@ contract NFTMarketplaceV2 is Ownable {
             require(SignatureChecker.isValidSignatureNow(ownerOfToken, digest, sig), "INVALID_SIGNATURE");
         }
         
-        uint price;
-        uint feeAmount;
+        uint256 fullPrice;
+        uint256 feeAmount;
 
-        price = rentTime * price;
+        fullPrice = rentTime * price;
         
-        feeAmount = price * fee / feeMutltipier;
+        feeAmount = fullPrice * fee / feeMutltipier;
 
         IERC20(_payToken).transferFrom(
             msg.sender,
@@ -160,14 +162,14 @@ contract NFTMarketplaceV2 is Ownable {
         IERC20(_payToken).transferFrom(
             msg.sender,
             ownerOfToken,
-            price - feeAmount
+            fullPrice - feeAmount
         );
 
         LockNFT(_token).transferFrom(ownerOfToken, msg.sender, tokenId);
         LockNFT(_token).lock(address(this), tokenId);
 
         userOffers[_token][tokenId][ownerOfToken].endTime = rentTime * day + block.timestamp;
-        userOffers[_token][tokenId][ownerOfToken].price = price;
+        userOffers[_token][tokenId][ownerOfToken].price = fullPrice;
         userOffers[_token][tokenId][ownerOfToken].payToken = _payToken;
 
         emit RentCreated(
@@ -177,7 +179,7 @@ contract NFTMarketplaceV2 is Ownable {
             _payToken, 
             tokenId, 
             rentTime,
-            price
+            fullPrice
         );
 
         return true;

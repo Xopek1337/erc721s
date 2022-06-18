@@ -31,7 +31,7 @@ describe('Market for ERC721s NFT tests', () => {
   };
 
   const fee = 10;
-  const feeMutltipier = 200;
+  const feeMutltipier = 100;
   const day = 86400;
   const initialBalance = 10000000;
 
@@ -86,6 +86,7 @@ describe('Market for ERC721s NFT tests', () => {
     });
   });
 
+  
   describe('Rent functional tests', async function () {
     it('Rent Standart  workflow', async function () {
       const rentTime = 5;
@@ -102,17 +103,28 @@ describe('Market for ERC721s NFT tests', () => {
         holder
       );
 
-      console.log(signature);
-      
       expect(await LockNFT.isApprovedForAll(locker.address, Market.address)).to.be.equal(true);
 
-      await Market.connect(locker).rent(LockNFT.address, erc20.address, args.tokenId, rentTime, deadline, args.price, signature);
+      const tx = await Market.connect(locker).rent(LockNFT.address, erc20.address, args.tokenId, rentTime, deadline, args.price, signature);
+      
+      const receipt = await tx.wait();
+      const gasUsed = receipt.gasUsed;
+      const gasPrice = receipt.effectiveGasPrice;
+      const gasCostEth = ethers.utils.formatEther(gasPrice * gasUsed);
+      
+      console.log("USED GAS: ");
+      console.log(gasUsed);
+
+      console.log("EFFECTIVE GAS PRICE: ");
+      console.log(gasPrice);
+
+      console.log("GAS COST IN ETH: ");
+      console.log(gasCostEth);
 
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const timestampBefore = (await ethers.provider.getBlock(blockNumBefore)).timestamp;
       const PriceWithFee = (await Market.userOffers(args.token, args.tokenId, holder.address)).price;
-      const holderProfit = PriceWithFee * rentTime;
-      const holderProfitWithoutAmount = holderProfit - holderProfit * fee / feeMutltipier;
+      const holderProfitWithoutAmount = PriceWithFee - PriceWithFee * fee / feeMutltipier;
 
       expect((await Market.userOffers(args.token, args.tokenId, holder.address)).endTime).to.be.equal(rentTime*day+timestampBefore);
       expect(holderProfitWithoutAmount).to.be.equal(
