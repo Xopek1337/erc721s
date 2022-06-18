@@ -24,7 +24,7 @@ contract NFTMarketplaceV2 is Ownable {
     uint256 public fee;
     uint256 public day = 1 days;
 
-    /// @dev multiplier for comission logic to divide the comission on two parts
+    /// @dev multiplier for comission logic
     uint256 public feeMutltipier = 100;
     
     struct OfferData {
@@ -53,8 +53,6 @@ contract NFTMarketplaceV2 is Ownable {
     mapping(address => mapping(uint256 => mapping(address => OfferData))) public userOffers;
 
     mapping(address => uint256) public nonces;
-
-    mapping(uint256 => uint256) public lockingNonces;
 
     event RentCreated(
         address renter,
