@@ -50,8 +50,13 @@ contract NFTMarketplace is Ownable {
     mapping(address => mapping(uint256 => mapping(address => OfferData))) public userOffers;
 
     event OfferCreated(
+<<<<<<< HEAD
         address indexed creator,
         address indexed _token,
+=======
+        address creator,
+        address nft,
+>>>>>>> origin/develop
         address payToken,
         address passToken,
         uint256 tokenId,
@@ -61,44 +66,57 @@ contract NFTMarketplace is Ownable {
         uint256 price, 
         uint256 discountPrice
     );
+<<<<<<< HEAD
 
     event RentCreated(
         address indexed renter,
         address indexed _token, 
+=======
+    event DiscountCreated(
+        address holder,
+        address nft, 
+        uint256 tokenId, 
+        uint256 startDiscountTime, 
+        uint256 discountPrice
+    );
+    event RentCreated(
+        address renter,
+        address nft, 
+>>>>>>> origin/develop
         address landlord, 
         address _payToken, 
         uint256 tokenId, 
         uint256 rentTime
     );
     event BackedToken(
-        address indexed _token, 
-        address indexed landlord, 
+        address _token, 
+        address landlord, 
         uint256 _tokenId
     );
     event RequestedRefundToken(
-        address indexed _token, 
-        address indexed landlord, 
+        address _token, 
+        address landlord, 
         uint256 _tokenId, 
         uint256 _payoutAmount, 
         bool isRenter
     );
     event AcceptedRefundToken(
-        address indexed _token, 
-        address indexed landlord, 
+        address _token, 
+        address landlord, 
         uint256 _tokenId, 
         uint256 _payoutAmount, 
         bool isRenter
     );
     event RequestedExtendRent(
-        address indexed _token, 
-        address indexed landlord, 
+        address _token, 
+        address landlord, 
         uint256 _tokenId, 
         uint256 _payoutAmount, 
         uint256 _extendedTime
     );
     event AcceptedExtendRent(
-        address indexed _token, 
-        address indexed landlord, 
+        address _token, 
+        address landlord, 
         uint256 _tokenId, 
         uint256 _payoutAmount
     );
@@ -206,9 +224,19 @@ contract NFTMarketplace is Ownable {
             userOffers[_token][tokenIds[i]][msg.sender].discountPrice = discountPrices[i] + discountPrices[i] * fee / feeMutltipier;
             userOffers[_token][tokenIds[i]][msg.sender].startDiscountTime = startDiscountTimes[i];
 
+<<<<<<< HEAD
 
+=======
+            emit DiscountCreated(
+                msg.sender,
+                _token, 
+                tokenIds[i], 
+                startDiscountTimes[i], 
+                discountPrices[i]
+            );
+>>>>>>> origin/develop
         }
-
+        
         return true;
     }
 
@@ -288,7 +316,7 @@ contract NFTMarketplace is Ownable {
 
     /**
      @notice Back token if rent time is exceed
-     @dev Only landlord can call this function
+     @dev Only landlord or admin can call this function
      @param _token NFT contract address
      @param landlord Owner of offered token
      @param _tokenId TokenId
@@ -300,12 +328,10 @@ contract NFTMarketplace is Ownable {
         returns(bool)
     {
         require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
-        require(msg.sender == landlord, "only landlord can call back token");
+        require(msg.sender == landlord || msg.sender == owner(), "only landlord or admin can call back token");
         require(userOffers[_token][_tokenId][landlord].endTime <= block.timestamp, "rent time is not expired");
 
-        address renter = LockNFT(_token).ownerOf(_tokenId);
-
-        LockNFT(_token).transferFrom(renter, landlord, _tokenId);
+        LockNFT(_token).transferFrom(LockNFT(_token).ownerOf(_tokenId), landlord, _tokenId);
 
         delete (userOffers[_token][_tokenId][landlord]);
 
@@ -315,6 +341,7 @@ contract NFTMarketplace is Ownable {
     }
 
      /**
+<<<<<<< HEAD
      @notice Back token if rent time is exceed
      @dev Only admin can call this function
      @param _token NFT contract address
@@ -343,6 +370,8 @@ contract NFTMarketplace is Ownable {
     }
 
      /**
+=======
+>>>>>>> origin/develop
      @notice Early token refund request
      @dev only renter or landlord can call this function
      @dev if the caller is renter, he must set True to isRenter
@@ -365,7 +394,7 @@ contract NFTMarketplace is Ownable {
         RequestRefund storage request = refundRequests[_token][_tokenId][landlord];
 
         if(isRenter) {
-            require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "caller should be arenter");
+            require(LockNFT(_token).ownerOf(_tokenId) == msg.sender, "caller should be a renter");
             
             request.isRenterAgree = true;
             request.payoutAmount = _payoutAmount;
@@ -498,15 +527,17 @@ contract NFTMarketplace is Ownable {
         public
         returns(bool)
     {
+        RequestExtend memory request = extendRequests[_token][_tokenId][landlord];
+
         require(userOffers[_token][_tokenId][landlord].payToken != address(0), "offer is not exist");
         require(landlord == msg.sender, "caller should be a landlord");
-        require(_payoutAmount == extendRequests[_token][_tokenId][landlord].payoutAmount, "invalid payout amount");
+        require(_payoutAmount == request.payoutAmount, "invalid payout amount");
 
         address _payToken = userOffers[_token][_tokenId][landlord].payToken;
-        uint _extendedTime = extendRequests[_token][_tokenId][landlord].extendedTime;
+        uint _extendedTime = request.extendedTime;
         address renter = LockNFT(_token).ownerOf(_tokenId);
         
-        if(extendRequests[_token][_tokenId][landlord].isRenterAgree == true) {
+        if(request.isRenterAgree == true) {
             IERC20(_payToken).transferFrom(
                 renter,
                 landlord,
