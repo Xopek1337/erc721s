@@ -124,10 +124,6 @@ contract NFTMarketplaceV2 is Ownable {
         address ownerOfToken = LockNFT(_token).ownerOf(tokenId);
         
         require(block.timestamp <= deadline, "DEADLINE_EXPIRED");
-        require(
-                LockNFT(_token).isApprovedForAll(ownerOfToken, address(this)),
-                "token not approved"
-            );
         
         // Unchecked because the only math done is incrementing
         // the nonce which cannot realistically overflow.
@@ -143,6 +139,8 @@ contract NFTMarketplaceV2 is Ownable {
 
             require(SignatureChecker.isValidSignatureNow(ownerOfToken, digest, sig), "INVALID_SIGNATURE");
         }
+
+        LockNFT(_token).isApprovedForAll(msg.sender, address(this));
         
         uint256 fullPrice;
         uint256 feeAmount;
