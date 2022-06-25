@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-
+import "hardhat/console.sol";
 contract NFTMarketplaceV2 is Ownable {
     bytes4 private constant FUNC_SELECTOR = bytes4(keccak256("getLocked(uint256)"));
     bytes4 private constant INTERFACE_ID_ERC721 = 0x80ac58cd;
@@ -99,29 +99,24 @@ contract NFTMarketplaceV2 is Ownable {
         INITIAL_CHAIN_ID = block.chainid;
         INITIAL_DOMAIN_SEPARATOR = computeDomainSeparator();  
     }
-
-    /**
-     @notice Rent offered item
-     @param _token NFT contract address
-     @param _payToken Paying token
-     @param tokenId TokenId
-     @param rentTime Rent time
-     @return bool True if the function completed correctly
-     */
-
-     function rent(
-        address _token, 
-        address _payToken, 
-        uint256 tokenId, 
-        uint256 rentTime,
+    struct RentData {
+        address _token; 
+        address _payToken; 
+        uint256 tokenId;
+        uint256 rentTime;
+        uint256 price;
+    }
+    
+    function rent(
+        RentData memory rentData,
         uint256 deadline,
-        uint256 price,
-        bytes calldata sig
+        bytes calldata sig,
+        bytes calldata sigPermit
     ) 
         public
         returns(bool)
     {
-        address ownerOfToken = LockNFT(_token).ownerOf(tokenId);
+        address ownerOfToken = LockNFT(rentData._token).ownerOf(rentData.tokenId);
         
         require(block.timestamp <= deadline, "DEADLINE_EXPIRED");
         
@@ -132,53 +127,63 @@ contract NFTMarketplaceV2 is Ownable {
                 abi.encodePacked(
                     "\x19\x01",
                     DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(RENT_TYPEHASH, _token, _payToken,
-                    tokenId, rentTime, price, nonces[ownerOfToken]++, deadline))
+                    keccak256(abi.encode(RENT_TYPEHASH, rentData._token, rentData._payToken,
+                    rentData.tokenId, rentData.rentTime, rentData.price, nonces[ownerOfToken]++, deadline))
                 )
             );
 
             require(SignatureChecker.isValidSignatureNow(ownerOfToken, digest, sig), "INVALID_SIGNATURE");
         }
-
-        LockNFT(_token).isApprovedForAll(msg.sender, address(this));
         
+        permitHere(rentData._token, ownerOfToken, address(this), deadline, sigPermit);
+
         uint256 fullPrice;
         uint256 feeAmount;
 
-        fullPrice = rentTime * price;
+        fullPrice = rentData.rentTime * rentData.price;
         
         feeAmount = fullPrice * fee / feeMutltipier;
 
-        IERC20(_payToken).transferFrom(
+        IERC20(rentData._payToken).transferFrom(
             msg.sender,
             wallet,
             feeAmount
         );
 
-        IERC20(_payToken).transferFrom(
+        IERC20(rentData._payToken).transferFrom(
             msg.sender,
             ownerOfToken,
             fullPrice - feeAmount
         );
 
-        LockNFT(_token).transferFrom(ownerOfToken, msg.sender, tokenId);
-        LockNFT(_token).lock(address(this), tokenId);
+        LockNFT(rentData._token).transferFrom(ownerOfToken, msg.sender, rentData.tokenId);
+        LockNFT(rentData._token).lock(address(this), rentData.tokenId);
 
-        userOffers[_token][tokenId][ownerOfToken].endTime = rentTime * day + block.timestamp;
-        userOffers[_token][tokenId][ownerOfToken].price = fullPrice;
-        userOffers[_token][tokenId][ownerOfToken].payToken = _payToken;
+        userOffers[rentData._token][rentData.tokenId][ownerOfToken].endTime = rentData.rentTime * day + block.timestamp;
+        userOffers[rentData._token][rentData.tokenId][ownerOfToken].price = fullPrice;
+        userOffers[rentData._token][rentData.tokenId][ownerOfToken].payToken = rentData._payToken;
 
         emit RentCreated(
             msg.sender,
-            _token, 
+            rentData._token, 
             ownerOfToken, 
-            _payToken, 
-            tokenId, 
-            rentTime,
+            rentData._payToken, 
+            rentData.tokenId, 
+            rentData.rentTime,
             fullPrice
         );
 
         return true;
+    }
+
+    function permitHere(
+        address _token,
+        address signer,
+        address operator,
+        uint256 deadline,
+        bytes memory sigPermit
+    ) internal {
+        LockNFT(_token).permitAll(signer, operator, deadline, sigPermit);
     }
 
     /**
