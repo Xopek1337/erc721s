@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "hardhat/console.sol";
+
 contract NFTMarketplaceV2 is Ownable {
     bytes4 private constant FUNC_SELECTOR = bytes4(keccak256("getLocked(uint256)"));
     bytes4 private constant INTERFACE_ID_ERC721 = 0x80ac58cd;
@@ -44,6 +44,14 @@ contract NFTMarketplaceV2 is Ownable {
         bool isLandlordAgree;
         uint256 payoutAmount;
         uint256 extendedTime;
+    }
+
+    struct RentData {
+        address _token; 
+        address _payToken; 
+        uint256 tokenId;
+        uint256 rentTime;
+        uint256 price;
     }
 
     mapping(address => mapping(uint256 => mapping(address => RequestRefund))) public refundRequests;
@@ -99,13 +107,12 @@ contract NFTMarketplaceV2 is Ownable {
         INITIAL_CHAIN_ID = block.chainid;
         INITIAL_DOMAIN_SEPARATOR = computeDomainSeparator();  
     }
-    struct RentData {
-        address _token; 
-        address _payToken; 
-        uint256 tokenId;
-        uint256 rentTime;
-        uint256 price;
-    }
+
+    /**
+     @notice Rent offered item
+     @param rentData Data for offer to sign
+     @return bool True if the function completed correctly
+     */
     
     function rent(
         RentData memory rentData,
@@ -135,7 +142,7 @@ contract NFTMarketplaceV2 is Ownable {
             require(SignatureChecker.isValidSignatureNow(ownerOfToken, digest, sig), "INVALID_SIGNATURE");
         }
         
-        permitHere(rentData._token, ownerOfToken, address(this), deadline, sigPermit);
+        permitAll(rentData._token, ownerOfToken, address(this), deadline, sigPermit);
 
         uint256 fullPrice;
         uint256 feeAmount;
@@ -176,13 +183,13 @@ contract NFTMarketplaceV2 is Ownable {
         return true;
     }
 
-    function permitHere(
+    function permitAll(
         address _token,
         address signer,
         address operator,
         uint256 deadline,
         bytes memory sigPermit
-    ) internal {
+    ) public { //TODO: visibility must be internal on my opinion
         LockNFT(_token).permitAll(signer, operator, deadline, sigPermit);
     }
 

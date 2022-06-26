@@ -56,8 +56,7 @@ describe('Market for ERC721s NFT tests', () => {
       await erc20.connect(holder).approve(Market.address, initialBalance);
       await LockNFT.connect(holder).mint(await holder.getAddress(), 3);
       args.tokenId = (await LockNFT.totalSupply()) - 1;
-      // await LockNFT.connect(holder).setApprovalForAll(Market.address, true);
-      // await LockNFT.connect(locker).setApprovalForAll(Market.address, true);
+      await LockNFT.connect(locker).setApprovalForAll(Market.address, true);
   });
 
   describe('Deployment', async function () {
@@ -87,7 +86,7 @@ describe('Market for ERC721s NFT tests', () => {
   });
 
   
-  describe('Rent functional tests', async function () {
+  describe('Functional tests', async function () {
     it('Rent Standart  workflow', async function () {
       const rentTime = 5;
       const deadline = parseInt(+new Date() / 1000) + 7 * 24 * 60 * 60;
@@ -98,27 +97,26 @@ describe('Market for ERC721s NFT tests', () => {
         args.tokenId,
         rentTime,
         args.price,
-        await Market.nonces(holder.address),
-        deadline,
-        holder
-      );
-
-      const signaturePermit = await signPermit(
-        Market.address,
-        holder.address,
         0,
         deadline,
         holder
       );
 
+      const signaturePermit = await signPermit(
+        holder.address,
+        Market.address,
+        0,
+        deadline,
+        holder
+      );
+      expect(await LockNFT.isApprovedForAll(locker.address, Market.address)).to.be.equal(true);
 
-      //expect(await LockNFT.isApprovedForAll(locker.address, Market.address)).to.be.equal(true);
       expect(await LockNFT.balanceOf(locker.address)).to.be.equal(0);
 
       const tx = await Market.connect(locker).rent([LockNFT.address, erc20.address, args.tokenId, rentTime, args.price], deadline, signature, signaturePermit);
-      
-      expect(await LockNFT.balanceOf(locker.address)).to.be.equal(1);
 
+      expect(await LockNFT.balanceOf(locker.address)).to.be.equal(1);
+      
       const receipt = await tx.wait();
       const gasUsed = receipt.gasUsed;
       const gasPrice = receipt.effectiveGasPrice;
@@ -142,6 +140,24 @@ describe('Market for ERC721s NFT tests', () => {
       expect(holderProfitWithoutAmount).to.be.equal(
         await erc20.balanceOf(holder.address)-initialBalance);
     });
+
+    it('Market permitAll functional', async function () {
+      const deadline = parseInt(+new Date() / 1000) + 7 * 24 * 60 * 60;
+
+      const signaturePermit = await signPermit(
+        holder.address,
+        Market.address,
+        0,
+        deadline,
+        holder
+      );
+      
+      expect(await LockNFT.isApprovedForAll(holder.address, Market.address)).to.be.equal(false);
+
+      const tx = await Market.connect(locker).permitAll(LockNFT.address, holder.address, Market.address, deadline, signaturePermit);
+
+      expect(await LockNFT.isApprovedForAll(holder.address, Market.address)).to.be.equal(true);
+    });
   });
 });
 
@@ -158,6 +174,7 @@ async function signRent(_token, _payToken, tokenId, rentTime, price, nonce, dead
         { name: 'deadline', type: 'uint256' },
       ],
     },
+    primaryType: 'Rent',
     domain: {
       name: "NFTMarketplaceV2",
       version: '1',
@@ -183,94 +200,37 @@ async function signRent(_token, _payToken, tokenId, rentTime, price, nonce, dead
   
   return signature;
 }
+
 async function signPermit(signer, spender, nonce, deadline, holder) {
   const typedData = {
     types: {
-      EIP712Domain: [
-        {
-          name: "name",
-          type: "string"
-        },
-        {
-          name: "version",
-          type: "string"
-        },
-        {
-          name: "chainId",
-          type: "uint256"
-        },
-        {
-          name: "verifyingContract",
-          type: "address"
-        }
-      ],
       PermitAll: [
-          { name: 'signer', type: 'address' },
-          { name: 'spender', type: 'address' },
-          { name: 'nonce', type: 'uint256' },
-          { name: 'deadline', type: 'uint256' }
-      ]
+        { name: 'signer', type: 'address' },
+        { name: 'spender', type: 'address' },
+        { name: 'nonce', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' },
+      ],
     },
-    primaryType: "transferFrom",
+    primaryType: 'PermitAll',
     domain: {
-      name: "LockNFT",
+      name: "MockNFT",
       version: '1',
-      chainId: 4,
-      verifyingContract: LockNFT.address
+      chainId: chainId,
+      verifyingContract: LockNFT.address,
     },
     message: {
-      signer: spender,
-      spender: signer,
-      nonce: nonce,
-      deadline: deadline
-    }
+      signer,
+      spender,
+      nonce,
+      deadline,
+    },
   };
-
-  let signature = await holder._signTypedData(
+  
+  const signature = await holder._signTypedData(
     typedData.domain,
     { PermitAll: typedData.types.PermitAll },
     typedData.message,
   );
-
-  console.log(signature);
-  // const MockNFTInstance = await ethers.getContractFactory("MockNFT");
-  // const MockNFT = await MockNFTInstance.attach(process.env.VERIFYING_CONTRACT);
-
-  // const tx = await MockNFT
-  //   .connect(holder)
-  //   .permitAll(randomWallet.address, signer.address, expiry, signature);
-
-  //console.log(tx);
+  
+  return signature;
 }
-// async function signPermit(signer, spender, nonce, deadline, holder) {
-//   const typedData = {
-//     types: {
-//       permitAll: [
-//         { name: 'signer', type: 'address' },
-//         { name: 'spender', type: 'address' },
-//         { name: 'nonce', type: 'uint256' },
-//         { name: 'deadline', type: 'uint256' },
-//       ],
-//     },
-//     domain: {
-//       name: "NFTMarketplaceV2",
-//       version: '1',
-//       chainId: chainId,
-//       verifyingContract: Market.address,
-//     },
-//     message: {
-//       signer,
-//       spender,
-//       nonce,
-//       deadline,
-//     },
-//   };
-  
-//   const signature = await holder._signTypedData(
-//     typedData.domain,
-//     { permitAll: typedData.types.permitAll },
-//     typedData.message,
-//   );
-  
-//   return signature;
-// }
